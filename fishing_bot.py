@@ -4,6 +4,7 @@ import pyautogui
 import cv2
 from PIL import ImageGrab
 import keyboard
+from calibrate import calibrate
 
 
 class FishingBot:
@@ -30,4 +31,16 @@ if __name__ == "__main__":
         if keyboard.is_pressed("q"):
             print("กำลังออกจากโปรแกรม...")
             break
-        time.sleep(0.1)
+
+        elif keyboard.is_pressed("c"):
+            left_pos, right_pos, gauge_width = calibrate(bot)
+
+            bot.screen_region = (
+                left_pos[0] - 10,  # x เริ่มต้น
+                left_pos[1] - 20,  # y เริ่มต้น
+                right_pos[0] + 10,  # x สิ้นสุด
+                left_pos[1] + 20,  # y สิ้นสุด
+            )
+
+            bot.gauge_y_position = left_pos[1] - 10  # ตำแหน่ง Y ของเกจวัด
+            print(f"ปรับเทียบเสร็จสิ้น: บริเวณเกจวัด = {bot.screen_region}")
