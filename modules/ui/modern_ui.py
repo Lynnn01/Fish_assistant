@@ -11,13 +11,14 @@ from .components.notification import Notification
 from .components.gauge_visualizer import GaugeVisualizer
 from .components.theme_manager import ThemeManager
 
+
 class ModernUI:
     def __init__(self, app):
         self.app = app
         self.root = app.root
 
         # สร้าง Theme Manager
-        self.theme_manager = ThemeManager(self, app.config.get('theme', 'light'))
+        self.theme_manager = ThemeManager(self, app.config.get("theme", "light"))
 
         # สร้างตัวแปรสำหรับ UI elements
         self.status_indicator = None
@@ -36,10 +37,7 @@ class ModernUI:
         self.catch_counter = tk.StringVar(value="0")
         self.detection_rate = tk.StringVar(value="0%")
 
-        # สร้าง UI หลัก
-        self.create_main_ui()
-
-    def create_main_ui(self):
+    def build_interface(self):
         """สร้าง UI หลักของโปรแกรม"""
         # กำหนดสีพื้นหลัก
         self.root.configure(bg=self.theme_manager.bg_color)
@@ -73,9 +71,14 @@ class ModernUI:
         # สร้าง Footer
         self.create_footer()
 
+        # เริ่มต้นอนิเมชัน
+        self.start_animations()
+
     def create_header(self):
         """สร้างส่วนหัวของโปรแกรม"""
-        header_frame = tk.Frame(self.root, bg=self.theme_manager.primary_color, height=60)
+        header_frame = tk.Frame(
+            self.root, bg=self.theme_manager.primary_color, height=60
+        )
         header_frame.pack(fill="x", pady=(0, 10))
 
         # โลโก้หรือไอคอน
@@ -87,7 +90,9 @@ class ModernUI:
                 logo_img = logo_img.resize((40, 40), Image.LANCZOS)
                 logo_photo = ImageTk.PhotoImage(logo_img)
 
-                logo_label = tk.Label(header_frame, image=logo_photo, bg=self.theme_manager.primary_color)
+                logo_label = tk.Label(
+                    header_frame, image=logo_photo, bg=self.theme_manager.primary_color
+                )
                 logo_label.image = logo_photo  # เก็บอ้างอิงเพื่อป้องกัน garbage collection
                 logo_label.pack(side="left", padx=10, pady=10)
         except Exception:
@@ -100,16 +105,13 @@ class ModernUI:
             text="Fishing Master Pro",
             font=("Arial", 18, "bold"),
             bg=self.theme_manager.primary_color,
-            fg="white"
+            fg="white",
         )
         title_label.pack(side="left", pady=15, padx=10)
 
         # ปุ่มเปลี่ยนธีม
         theme_button = ttk.Button(
-            header_frame,
-            text="🌓",
-            width=3,
-            command=self.toggle_theme
+            header_frame, text="🌓", width=3, command=self.toggle_theme
         )
         theme_button.pack(side="right", padx=10, pady=15)
 
@@ -119,18 +121,14 @@ class ModernUI:
         footer_frame.pack(fill="x", padx=15, pady=10)
 
         # ข้อความ hotkey และเวอร์ชัน
-        version_label = ttk.Label(
-            footer_frame, 
-            text="v1.0.0",
-            font=("Arial", 8)
-        )
+        version_label = ttk.Label(footer_frame, text="v1.0.0", font=("Arial", 8))
         version_label.pack(side="right", padx=5)
 
         hotkey_label = ttk.Label(
-            footer_frame, 
-            text="Hotkeys: F6 = Start | F10 = Stop", 
+            footer_frame,
+            text="Hotkeys: F6 = Start | F10 = Stop",
             foreground=self.theme_manager.warning_color,
-            font=("Arial", 9, "bold")
+            font=("Arial", 9, "bold"),
         )
         hotkey_label.pack(side="left", padx=5)
 
@@ -141,17 +139,33 @@ class ModernUI:
         status_frame.pack(fill="x", pady=10)
 
         # สร้างตัวแสดงสถานะแบบกราฟิก
-        self.status_canvas = tk.Canvas(status_frame, height=30, bg=self.theme_manager.bg_color, highlightthickness=0)
+        self.status_canvas = tk.Canvas(
+            status_frame,
+            height=30,
+            bg=self.theme_manager.bg_color,
+            highlightthickness=0,
+        )
         self.status_canvas.pack(fill="x", pady=5, padx=5)
 
-        self.status_indicator = self.status_canvas.create_oval(10, 5, 30, 25, fill="#cccccc")
-        self.status_text = self.status_canvas.create_text(40, 15, text="Ready", anchor="w", font=("Arial", 10, "bold"), fill=self.theme_manager.text_color)
+        self.status_indicator = self.status_canvas.create_oval(
+            10, 5, 30, 25, fill="#cccccc"
+        )
+        self.status_text = self.status_canvas.create_text(
+            40,
+            15,
+            text="Ready",
+            anchor="w",
+            font=("Arial", 10, "bold"),
+            fill=self.theme_manager.text_color,
+        )
 
         # กรอบแสดงข้อมูลพื้นที่ที่เลือก
         self.region_frame = ttk.Frame(status_frame)
         self.region_frame.pack(fill="x", pady=5)
 
-        ttk.Label(self.region_frame, text="Region:", font=("Arial", 10, "bold")).pack(side="left", padx=5)
+        ttk.Label(self.region_frame, text="Region:", font=("Arial", 10, "bold")).pack(
+            side="left", padx=5
+        )
         self.region_label = ttk.Label(self.region_frame, text="No region selected")
         self.region_label.pack(side="left", padx=5)
 
@@ -168,7 +182,7 @@ class ModernUI:
             control_frame,
             text="Select Region",
             style="Primary.TButton",
-            command=lambda: self.app.detector.select_gauge_region()
+            command=lambda: self.app.detector.select_gauge_region(),
         )
         self.select_button.grid(row=0, column=0, padx=5, pady=5, sticky="ew")
 
@@ -177,7 +191,7 @@ class ModernUI:
             text="Start",
             style="Success.TButton",
             command=self.app.start_fishing,
-            state="disabled"
+            state="disabled",
         )
         self.start_button.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
 
@@ -186,7 +200,7 @@ class ModernUI:
             text="Stop",
             style="Danger.TButton",
             command=self.app.stop_fishing,
-            state="disabled"
+            state="disabled",
         )
         self.stop_button.grid(row=0, column=2, padx=5, pady=5, sticky="ew")
 
@@ -202,16 +216,19 @@ class ModernUI:
         sample_frame.pack(fill="x", pady=10)
 
         # Canvas สำหรับแสดงภาพตัวอย่าง
-        self.sample_canvas = tk.Canvas(sample_frame, height=120, bg="#333333", highlightthickness=0)
+        self.sample_canvas = tk.Canvas(
+            sample_frame, height=120, bg="#333333", highlightthickness=0
+        )
         self.sample_canvas.pack(fill="x", pady=10, padx=10)
 
         # Text instruction ถ้ายังไม่มีภาพ
         self.sample_text = self.sample_canvas.create_text(
-            self.sample_canvas.winfo_reqwidth() // 2, 60,
+            self.sample_canvas.winfo_reqwidth() // 2,
+            60,
             text="No sample image available\nSelect a region to see preview",
             fill="white",
             justify=tk.CENTER,
-            font=("Arial", 10)
+            font=("Arial", 10),
         )
 
         # กรอบแสดงสถิติการตกปลา
@@ -229,25 +246,43 @@ class ModernUI:
         stats_grid.columnconfigure(3, weight=1)
 
         # Catches
-        ttk.Label(stats_grid, text="Catches:", font=("Arial", 10, "bold")).grid(row=0, column=0, sticky="w", padx=5, pady=5)
-        ttk.Label(stats_grid, textvariable=self.catch_counter, font=("Arial", 10)).grid(row=0, column=1, sticky="w", padx=5, pady=5)
+        ttk.Label(stats_grid, text="Catches:", font=("Arial", 10, "bold")).grid(
+            row=0, column=0, sticky="w", padx=5, pady=5
+        )
+        ttk.Label(stats_grid, textvariable=self.catch_counter, font=("Arial", 10)).grid(
+            row=0, column=1, sticky="w", padx=5, pady=5
+        )
 
         # Detection Rate
-        ttk.Label(stats_grid, text="Detection Rate:", font=("Arial", 10, "bold")).grid(row=0, column=2, sticky="w", padx=5, pady=5)
-        ttk.Label(stats_grid, textvariable=self.detection_rate, font=("Arial", 10)).grid(row=0, column=3, sticky="w", padx=5, pady=5)
+        ttk.Label(stats_grid, text="Detection Rate:", font=("Arial", 10, "bold")).grid(
+            row=0, column=2, sticky="w", padx=5, pady=5
+        )
+        ttk.Label(
+            stats_grid, textvariable=self.detection_rate, font=("Arial", 10)
+        ).grid(row=0, column=3, sticky="w", padx=5, pady=5)
 
         # Session Time
-        ttk.Label(stats_grid, text="Session Time:", font=("Arial", 10, "bold")).grid(row=1, column=0, sticky="w", padx=5, pady=5)
+        ttk.Label(stats_grid, text="Session Time:", font=("Arial", 10, "bold")).grid(
+            row=1, column=0, sticky="w", padx=5, pady=5
+        )
         self.session_time = tk.StringVar(value="00:00:00")
-        ttk.Label(stats_grid, textvariable=self.session_time, font=("Arial", 10)).grid(row=1, column=1, sticky="w", padx=5, pady=5)
+        ttk.Label(stats_grid, textvariable=self.session_time, font=("Arial", 10)).grid(
+            row=1, column=1, sticky="w", padx=5, pady=5
+        )
 
         # Catch Rate
-        ttk.Label(stats_grid, text="Catch Rate:", font=("Arial", 10, "bold")).grid(row=1, column=2, sticky="w", padx=5, pady=5)
+        ttk.Label(stats_grid, text="Catch Rate:", font=("Arial", 10, "bold")).grid(
+            row=1, column=2, sticky="w", padx=5, pady=5
+        )
         self.catch_rate = tk.StringVar(value="0.0/h")
-        ttk.Label(stats_grid, textvariable=self.catch_rate, font=("Arial", 10)).grid(row=1, column=3, sticky="w", padx=5, pady=5)
+        ttk.Label(stats_grid, textvariable=self.catch_rate, font=("Arial", 10)).grid(
+            row=1, column=3, sticky="w", padx=5, pady=5
+        )
 
         # ปุ่ม Reset Counter
-        ttk.Button(fishing_stats_frame, text="Reset Counter", command=self.reset_counter).pack(side="left", padx=10, pady=5)
+        ttk.Button(
+            fishing_stats_frame, text="Reset Counter", command=self.reset_counter
+        ).pack(side="left", padx=10, pady=5)
 
     def build_stats_tab(self, parent):
         """สร้างแท็บสถิติ (Statistics) สำหรับแสดงข้อมูลสถิติ"""
@@ -259,136 +294,192 @@ class ModernUI:
         stats_grid = ttk.Frame(all_time_frame)
         stats_grid.pack(fill="x", padx=10, pady=10)
 
-        # คอลัมน์
-        stats_grid.columnconfigure(0, weight=2)
-        stats_grid.columnconfigure(1, weight=1)
-        stats_grid.columnconfigure(2, weight=2)
-        stats_grid.columnconfigure(3, weight=1)
+        try:
+            # โหลดสถิติ
+            all_time_stats = self.app.analytics.get_all_time_stats()
 
-        # โหลดสถิติ
-        all_time_stats = self.app.analytics.get_all_time_stats()
+            # คอลัมน์
+            stats_grid.columnconfigure(0, weight=2)
+            stats_grid.columnconfigure(1, weight=1)
+            stats_grid.columnconfigure(2, weight=2)
+            stats_grid.columnconfigure(3, weight=1)
 
-        # Total Catches
-        ttk.Label(stats_grid, text="Total Catches:", font=("Arial", 10, "bold")).grid(row=0, column=0, sticky="w", padx=5, pady=5)
-        ttk.Label(stats_grid, text=str(all_time_stats['total_catches']), font=("Arial", 10)).grid(row=0, column=1, sticky="w", padx=5, pady=5)
+            # Total Catches
+            ttk.Label(
+                stats_grid, text="Total Catches:", font=("Arial", 10, "bold")
+            ).grid(row=0, column=0, sticky="w", padx=5, pady=5)
+            ttk.Label(
+                stats_grid,
+                text=str(all_time_stats["total_catches"]),
+                font=("Arial", 10),
+            ).grid(row=0, column=1, sticky="w", padx=5, pady=5)
 
-        # Total Sessions
-        ttk.Label(stats_grid, text="Total Sessions:", font=("Arial", 10, "bold")).grid(row=0, column=2, sticky="w", padx=5, pady=5)
-        ttk.Label(stats_grid, text=str(all_time_stats['total_sessions']), font=("Arial", 10)).grid(row=0, column=3, sticky="w", padx=5, pady=5)
+            # Total Sessions
+            ttk.Label(
+                stats_grid, text="Total Sessions:", font=("Arial", 10, "bold")
+            ).grid(row=0, column=2, sticky="w", padx=5, pady=5)
+            ttk.Label(
+                stats_grid,
+                text=str(all_time_stats["total_sessions"]),
+                font=("Arial", 10),
+            ).grid(row=0, column=3, sticky="w", padx=5, pady=5)
 
-        # Total Time
-        ttk.Label(stats_grid, text="Total Time:", font=("Arial", 10, "bold")).grid(row=1, column=0, sticky="w", padx=5, pady=5)
+            # Total Time
+            ttk.Label(stats_grid, text="Total Time:", font=("Arial", 10, "bold")).grid(
+                row=1, column=0, sticky="w", padx=5, pady=5
+            )
 
-        # แปลงเวลาเป็นรูปแบบที่อ่านง่าย
-        total_hours = int(all_time_stats['total_time'] // 3600)
-        total_minutes = int((all_time_stats['total_time'] % 3600) // 60)
-        time_text = f"{total_hours}h {total_minutes}m"
+            # แปลงเวลาเป็นรูปแบบที่อ่านง่าย
+            total_hours = int(all_time_stats["total_time"] // 3600)
+            total_minutes = int((all_time_stats["total_time"] % 3600) // 60)
+            time_text = f"{total_hours}h {total_minutes}m"
 
-        ttk.Label(stats_grid, text=time_text, font=("Arial", 10)).grid(row=1, column=1, sticky="w", padx=5, pady=5)
+            ttk.Label(stats_grid, text=time_text, font=("Arial", 10)).grid(
+                row=1, column=1, sticky="w", padx=5, pady=5
+            )
 
-        # Total Clicks
-        ttk.Label(stats_grid, text="Total Clicks:", font=("Arial", 10, "bold")).grid(row=1, column=2, sticky="w", padx=5, pady=5)
-        ttk.Label(stats_grid, text=str(all_time_stats['total_clicks']), font=("Arial", 10)).grid(row=1, column=3, sticky="w", padx=5, pady=5)
+            # Total Clicks
+            ttk.Label(
+                stats_grid, text="Total Clicks:", font=("Arial", 10, "bold")
+            ).grid(row=1, column=2, sticky="w", padx=5, pady=5)
+            ttk.Label(
+                stats_grid, text=str(all_time_stats["total_clicks"]), font=("Arial", 10)
+            ).grid(row=1, column=3, sticky="w", padx=5, pady=5)
 
-        # Best Session
-        best_frame = ttk.LabelFrame(parent, text="Best Session")
-        best_frame.pack(fill="x", pady=10)
+            # Best Session
+            best_frame = ttk.LabelFrame(parent, text="Best Session")
+            best_frame.pack(fill="x", pady=10)
 
-        best_grid = ttk.Frame(best_frame)
-        best_grid.pack(fill="x", padx=10, pady=10)
+            best_grid = ttk.Frame(best_frame)
+            best_grid.pack(fill="x", padx=10, pady=10)
 
-        # คอลัมน์
-        best_grid.columnconfigure(0, weight=2)
-        best_grid.columnconfigure(1, weight=1)
-        best_grid.columnconfigure(2, weight=2)
-        best_grid.columnconfigure(3, weight=1)
+            # คอลัมน์
+            best_grid.columnconfigure(0, weight=2)
+            best_grid.columnconfigure(1, weight=1)
+            best_grid.columnconfigure(2, weight=2)
+            best_grid.columnconfigure(3, weight=1)
 
-        best_session = all_time_stats['best_session']
+            best_session = all_time_stats["best_session"]
 
-        # Date
-        ttk.Label(best_grid, text="Date:", font=("Arial", 10, "bold")).grid(row=0, column=0, sticky="w", padx=5, pady=5)
-        ttk.Label(best_grid, text=best_session['date'], font=("Arial", 10)).grid(row=0, column=1, sticky="w", padx=5, pady=5)
+            # Date
+            ttk.Label(best_grid, text="Date:", font=("Arial", 10, "bold")).grid(
+                row=0, column=0, sticky="w", padx=5, pady=5
+            )
+            ttk.Label(best_grid, text=best_session["date"], font=("Arial", 10)).grid(
+                row=0, column=1, sticky="w", padx=5, pady=5
+            )
 
-        # Catches
-        ttk.Label(best_grid, text="Catches:", font=("Arial", 10, "bold")).grid(row=0, column=2, sticky="w", padx=5, pady=5)
-        ttk.Label(best_grid, text=str(best_session['catches']), font=("Arial", 10)).grid(row=0, column=3, sticky="w", padx=5, pady=5)
+            # Catches
+            ttk.Label(best_grid, text="Catches:", font=("Arial", 10, "bold")).grid(
+                row=0, column=2, sticky="w", padx=5, pady=5
+            )
+            ttk.Label(
+                best_grid, text=str(best_session["catches"]), font=("Arial", 10)
+            ).grid(row=0, column=3, sticky="w", padx=5, pady=5)
 
-        # Duration
-        ttk.Label(best_grid, text="Duration:", font=("Arial", 10, "bold")).grid(row=1, column=0, sticky="w", padx=5, pady=5)
+            # Duration
+            ttk.Label(best_grid, text="Duration:", font=("Arial", 10, "bold")).grid(
+                row=1, column=0, sticky="w", padx=5, pady=5
+            )
 
-        # แปลงเวลาเป็นรูปแบบที่อ่านง่าย
-        duration_hours = int(best_session['duration'] // 3600)
-        duration_minutes = int((best_session['duration'] % 3600) // 60)
-        duration_text = f"{duration_hours}h {duration_minutes}m"
+            # แปลงเวลาเป็นรูปแบบที่อ่านง่าย
+            duration_hours = int(best_session["duration"] // 3600)
+            duration_minutes = int((best_session["duration"] % 3600) // 60)
+            duration_text = f"{duration_hours}h {duration_minutes}m"
 
-        ttk.Label(best_grid, text=duration_text, font=("Arial", 10)).grid(row=1, column=1, sticky="w", padx=5, pady=5)
+            ttk.Label(best_grid, text=duration_text, font=("Arial", 10)).grid(
+                row=1, column=1, sticky="w", padx=5, pady=5
+            )
 
-        # Catch Rate
-        ttk.Label(best_grid, text="Catch Rate:", font=("Arial", 10, "bold")).grid(row=1, column=2, sticky="w", padx=5, pady=5)
+            # Catch Rate
+            ttk.Label(best_grid, text="Catch Rate:", font=("Arial", 10, "bold")).grid(
+                row=1, column=2, sticky="w", padx=5, pady=5
+            )
 
-        if best_session['duration'] > 0:
-            rate = (best_session['catches'] / best_session['duration']) * 3600
-            rate_text = f"{rate:.1f}/h"
-        else:
-            rate_text = "N/A"
-
-        ttk.Label(best_grid, text=rate_text, font=("Arial", 10)).grid(row=1, column=3, sticky="w", padx=5, pady=5)
-
-        # กรอบประวัติการใช้งาน
-        history_frame = ttk.LabelFrame(parent, text="Session History")
-        history_frame.pack(fill="both", expand=True, pady=10)
-
-        # สร้าง Treeview สำหรับแสดงประวัติ
-        columns = ("date", "catches", "duration", "rate")
-        history_tree = ttk.Treeview(history_frame, columns=columns, show="headings")
-
-        # กำหนดหัวข้อคอลัมน์
-        history_tree.heading("date", text="Date")
-        history_tree.heading("catches", text="Catches")
-        history_tree.heading("duration", text="Duration")
-        history_tree.heading("rate", text="Rate (fish/h)")
-
-        # กำหนดความกว้างคอลัมน์
-        history_tree.column("date", width=150)
-        history_tree.column("catches", width=80)
-        history_tree.column("duration", width=80)
-        history_tree.column("rate", width=100)
-
-        # เพิ่ม Scrollbar
-        scrollbar = ttk.Scrollbar(history_frame, orient="vertical", command=history_tree.yview)
-        history_tree.configure(yscrollcommand=scrollbar.set)
-
-        # จัดวาง
-        history_tree.pack(side="left", fill="both", expand=True)
-        scrollbar.pack(side="right", fill="y")
-
-        # เพิ่มข้อมูลประวัติ
-        for session in reversed(all_time_stats['history']):
-            # แปลงระยะเวลา
-            hours = int(session['duration'] // 3600)
-            minutes = int((session['duration'] % 3600) // 60)
-            duration_str = f"{hours}h {minutes}m"
-
-            # คำนวณอัตรา
-            if session['duration'] > 0:
-                rate = (session['catches'] / session['duration']) * 3600
-                rate_str = f"{rate:.1f}"
+            if best_session["duration"] > 0:
+                rate = (best_session["catches"] / best_session["duration"]) * 3600
+                rate_text = f"{rate:.1f}/h"
             else:
-                rate_str = "N/A"
+                rate_text = "N/A"
 
-            history_tree.insert("", "end", values=(
-                session['date'],
-                session['catches'],
-                duration_str,
-                rate_str
-            ))
+            ttk.Label(best_grid, text=rate_text, font=("Arial", 10)).grid(
+                row=1, column=3, sticky="w", padx=5, pady=5
+            )
 
-        # ปุ่มสำหรับ Export สถิติ
-        button_frame = ttk.Frame(parent)
-        button_frame.pack(fill="x", pady=10)
+            # กรอบประวัติการใช้งาน
+            history_frame = ttk.LabelFrame(parent, text="Session History")
+            history_frame.pack(fill="both", expand=True, pady=10)
 
-        ttk.Button(button_frame, text="Export Statistics", command=self.export_statistics).pack(side="left", padx=5)
-        ttk.Button(button_frame, text="Reset All Statistics", command=self.reset_all_statistics).pack(side="right", padx=5)
+            # สร้าง Treeview สำหรับแสดงประวัติ
+            columns = ("date", "catches", "duration", "rate")
+            history_tree = ttk.Treeview(history_frame, columns=columns, show="headings")
+
+            # กำหนดหัวข้อคอลัมน์
+            history_tree.heading("date", text="Date")
+            history_tree.heading("catches", text="Catches")
+            history_tree.heading("duration", text="Duration")
+            history_tree.heading("rate", text="Rate (fish/h)")
+
+            # กำหนดความกว้างคอลัมน์
+            history_tree.column("date", width=150)
+            history_tree.column("catches", width=80)
+            history_tree.column("duration", width=80)
+            history_tree.column("rate", width=100)
+
+            # เพิ่ม Scrollbar
+            scrollbar = ttk.Scrollbar(
+                history_frame, orient="vertical", command=history_tree.yview
+            )
+            history_tree.configure(yscrollcommand=scrollbar.set)
+
+            # จัดวาง
+            history_tree.pack(side="left", fill="both", expand=True)
+            scrollbar.pack(side="right", fill="y")
+
+            # เพิ่มข้อมูลประวัติ
+            for session in reversed(all_time_stats["history"]):
+                # แปลงระยะเวลา
+                hours = int(session["duration"] // 3600)
+                minutes = int((session["duration"] % 3600) // 60)
+                duration_str = f"{hours}h {minutes}m"
+
+                # คำนวณอัตรา
+                if session["duration"] > 0:
+                    rate = (session["catches"] / session["duration"]) * 3600
+                    rate_str = f"{rate:.1f}"
+                else:
+                    rate_str = "N/A"
+
+                history_tree.insert(
+                    "",
+                    "end",
+                    values=(
+                        session["date"],
+                        session["catches"],
+                        duration_str,
+                        rate_str,
+                    ),
+                )
+
+            # ปุ่มสำหรับ Export สถิติ
+            button_frame = ttk.Frame(parent)
+            button_frame.pack(fill="x", pady=10)
+
+            ttk.Button(
+                button_frame, text="Export Statistics", command=self.export_statistics
+            ).pack(side="left", padx=5)
+            ttk.Button(
+                button_frame,
+                text="Reset All Statistics",
+                command=self.reset_all_statistics,
+            ).pack(side="right", padx=5)
+        except Exception as e:
+            # ในกรณีที่ยังโหลดข้อมูลไม่ได้ แสดงข้อความแทน
+            ttk.Label(
+                stats_grid,
+                text=f"Statistics will be available after first use.",
+                font=("Arial", 10),
+            ).pack(pady=20)
 
     def build_settings_tab(self, parent):
         """สร้างแท็บการตั้งค่า (Settings)"""
@@ -422,8 +513,17 @@ class ModernUI:
         button_frame = ttk.Frame(parent)
         button_frame.pack(fill="x", pady=10)
 
-        ttk.Button(button_frame, text="Save Settings", command=self.app.save_settings, style="Primary.TButton").pack(side="right", padx=5)
-        ttk.Button(button_frame, text="Reset to Default", command=self.reset_to_default_settings).pack(side="left", padx=5)
+        ttk.Button(
+            button_frame,
+            text="Save Settings",
+            command=self.app.save_settings,
+            style="Primary.TButton",
+        ).pack(side="right", padx=5)
+        ttk.Button(
+            button_frame,
+            text="Reset to Default",
+            command=self.reset_to_default_settings,
+        ).pack(side="left", padx=5)
 
     def build_general_settings(self, parent):
         """สร้างการตั้งค่าทั่วไป"""
@@ -437,8 +537,10 @@ class ModernUI:
 
         ttk.Label(theme_frame, text="Theme:").pack(side="left", padx=5)
 
-        theme_var = tk.StringVar(value=self.app.config.get('theme', 'light'))
-        theme_combo = ttk.Combobox(theme_frame, textvariable=theme_var, state="readonly")
+        theme_var = tk.StringVar(value=self.app.config.get("theme", "light"))
+        theme_combo = ttk.Combobox(
+            theme_frame, textvariable=theme_var, state="readonly"
+        )
         theme_combo["values"] = ("light", "dark", "blue", "green")
         theme_combo.pack(side="left", padx=5)
 
@@ -453,13 +555,9 @@ class ModernUI:
 
         ttk.Label(anim_frame, text="Animation Speed:").pack(side="left", padx=5)
 
-        animation_var = tk.IntVar(value=self.app.config.get('animation_speed', 5))
+        animation_var = tk.IntVar(value=self.app.config.get("animation_speed", 5))
         animation_scale = ttk.Scale(
-            anim_frame, 
-            from_=0, 
-            to=10, 
-            orient="horizontal", 
-            variable=animation_var
+            anim_frame, from_=0, to=10, orient="horizontal", variable=animation_var
         )
         animation_scale.pack(side="left", fill="x", expand=True, padx=5)
 
@@ -469,11 +567,9 @@ class ModernUI:
         sound_frame = ttk.Frame(ui_frame)
         sound_frame.pack(fill="x", padx=5, pady=5)
 
-        sound_var = tk.BooleanVar(value=self.app.config.get('sound_alerts', True))
+        sound_var = tk.BooleanVar(value=self.app.config.get("sound_alerts", True))
         sound_check = ttk.Checkbutton(
-            sound_frame, 
-            text="Enable Sound Alerts", 
-            variable=sound_var
+            sound_frame, text="Enable Sound Alerts", variable=sound_var
         )
         sound_check.pack(side="left", padx=5)
 
@@ -481,11 +577,9 @@ class ModernUI:
         tray_frame = ttk.Frame(ui_frame)
         tray_frame.pack(fill="x", padx=5, pady=5)
 
-        tray_var = tk.BooleanVar(value=self.app.config.get('minimize_to_tray', False))
+        tray_var = tk.BooleanVar(value=self.app.config.get("minimize_to_tray", False))
         tray_check = ttk.Checkbutton(
-            tray_frame, 
-            text="Minimize to System Tray", 
-            variable=tray_var
+            tray_frame, text="Minimize to System Tray", variable=tray_var
         )
         tray_check.pack(side="left", padx=5)
 
@@ -497,15 +591,17 @@ class ModernUI:
         cooldown_frame = ttk.Frame(click_frame)
         cooldown_frame.pack(fill="x", padx=5, pady=5)
 
-        ttk.Label(cooldown_frame, text="Action Cooldown (sec):").pack(side="left", padx=5)
+        ttk.Label(cooldown_frame, text="Action Cooldown (sec):").pack(
+            side="left", padx=5
+        )
 
-        cooldown_var = tk.DoubleVar(value=self.app.config.get('action_cooldown', 0.1))
+        cooldown_var = tk.DoubleVar(value=self.app.config.get("action_cooldown", 0.1))
         cooldown_scale = ttk.Scale(
-            cooldown_frame, 
-            from_=0.05, 
-            to=0.5, 
-            orient="horizontal", 
-            variable=cooldown_var
+            cooldown_frame,
+            from_=0.05,
+            to=0.5,
+            orient="horizontal",
+            variable=cooldown_var,
         )
         cooldown_scale.pack(side="left", fill="x", expand=True, padx=5)
 
@@ -518,17 +614,19 @@ class ModernUI:
         cooldown_var.trace_add("write", update_cooldown_label)
         update_cooldown_label()
 
-        ttk.Label(cooldown_frame, textvariable=cooldown_label_var).pack(side="left", padx=5)
+        ttk.Label(cooldown_frame, textvariable=cooldown_label_var).pack(
+            side="left", padx=5
+        )
 
         # Double Click
         double_click_frame = ttk.Frame(click_frame)
         double_click_frame.pack(fill="x", padx=5, pady=5)
 
-        double_click_var = tk.BooleanVar(value=self.app.config.get('double_click', False))
+        double_click_var = tk.BooleanVar(
+            value=self.app.config.get("double_click", False)
+        )
         double_click_check = ttk.Checkbutton(
-            double_click_frame, 
-            text="Enable Double Click", 
-            variable=double_click_var
+            double_click_frame, text="Enable Double Click", variable=double_click_var
         )
         double_click_check.pack(side="left", padx=5)
 
@@ -536,15 +634,19 @@ class ModernUI:
         double_click_delay_frame = ttk.Frame(click_frame)
         double_click_delay_frame.pack(fill="x", padx=5, pady=5)
 
-        ttk.Label(double_click_delay_frame, text="Double Click Delay (sec):").pack(side="left", padx=5)
+        ttk.Label(double_click_delay_frame, text="Double Click Delay (sec):").pack(
+            side="left", padx=5
+        )
 
-        double_click_delay_var = tk.DoubleVar(value=self.app.config.get('double_click_delay', 0.1))
+        double_click_delay_var = tk.DoubleVar(
+            value=self.app.config.get("double_click_delay", 0.1)
+        )
         double_click_delay_scale = ttk.Scale(
-            double_click_delay_frame, 
-            from_=0.05, 
-            to=0.5, 
-            orient="horizontal", 
-            variable=double_click_delay_var
+            double_click_delay_frame,
+            from_=0.05,
+            to=0.5,
+            orient="horizontal",
+            variable=double_click_delay_var,
         )
         double_click_delay_scale.pack(side="left", fill="x", expand=True, padx=5)
 
@@ -558,7 +660,9 @@ class ModernUI:
         update_double_click_delay_label()
 
         ### modules/ui/modern_ui.py (continued)
-        ttk.Label(double_click_delay_frame, textvariable=double_click_delay_label_var).pack(side="left", padx=5)
+        ttk.Label(
+            double_click_delay_frame, textvariable=double_click_delay_label_var
+        ).pack(side="left", padx=5)
 
         # เชื่อมการแสดงผลกับการเปิด/ปิด Double Click
         def toggle_double_click_delay(*args):
@@ -573,13 +677,13 @@ class ModernUI:
         # สร้างฟังก์ชันเพื่อเก็บการตั้งค่าทั้งหมด
         def get_general_settings():
             return {
-                'theme': theme_var.get(),
-                'animation_speed': animation_var.get(),
-                'sound_alerts': sound_var.get(),
-                'minimize_to_tray': tray_var.get(),
-                'action_cooldown': cooldown_var.get(),
-                'double_click': double_click_var.get(),
-                'double_click_delay': double_click_delay_var.get(),
+                "theme": theme_var.get(),
+                "animation_speed": animation_var.get(),
+                "sound_alerts": sound_var.get(),
+                "minimize_to_tray": tray_var.get(),
+                "action_cooldown": cooldown_var.get(),
+                "double_click": double_click_var.get(),
+                "double_click_delay": double_click_delay_var.get(),
             }
 
         # เก็บฟังก์ชันไว้ในออบเจ็กต์เพื่อเรียกใช้ภายหลัง
@@ -597,13 +701,9 @@ class ModernUI:
 
         ttk.Label(color_frame, text="Color Sensitivity:").pack(side="left", padx=5)
 
-        color_var = tk.IntVar(value=self.app.config.get('green_tolerance', 30))
+        color_var = tk.IntVar(value=self.app.config.get("green_tolerance", 30))
         color_scale = ttk.Scale(
-            color_frame, 
-            from_=10, 
-            to=50, 
-            orient="horizontal", 
-            variable=color_var
+            color_frame, from_=10, to=50, orient="horizontal", variable=color_var
         )
         color_scale.pack(side="left", fill="x", expand=True, padx=5)
 
@@ -615,13 +715,9 @@ class ModernUI:
 
         ttk.Label(line_frame, text="Line Threshold:").pack(side="left", padx=5)
 
-        line_var = tk.IntVar(value=self.app.config.get('line_threshold', 200))
+        line_var = tk.IntVar(value=self.app.config.get("line_threshold", 200))
         line_scale = ttk.Scale(
-            line_frame, 
-            from_=150, 
-            to=250, 
-            orient="horizontal", 
-            variable=line_var
+            line_frame, from_=150, to=250, orient="horizontal", variable=line_var
         )
         line_scale.pack(side="left", fill="x", expand=True, padx=5)
 
@@ -637,12 +733,23 @@ class ModernUI:
 
         ttk.Label(green_color_frame, text="Green Color:").pack(side="left", padx=5)
 
-        green_color_var = tk.StringVar(value=self.app.config.get('green_color', 'rgba(83,250,83,255)'))
-        green_color_entry = ttk.Entry(green_color_frame, textvariable=green_color_var, width=20)
+        green_color_var = tk.StringVar(
+            value=self.app.config.get("green_color", "rgba(83,250,83,255)")
+        )
+        green_color_entry = ttk.Entry(
+            green_color_frame, textvariable=green_color_var, width=20
+        )
         green_color_entry.pack(side="left", padx=5)
 
         # แสดงตัวอย่างสีเขียว
-        green_color_sample = tk.Canvas(green_color_frame, width=30, height=20, bg="#53FA53", highlightthickness=1, highlightbackground="black")
+        green_color_sample = tk.Canvas(
+            green_color_frame,
+            width=30,
+            height=20,
+            bg="#53FA53",
+            highlightthickness=1,
+            highlightbackground="black",
+        )
         green_color_sample.pack(side="left", padx=5)
 
         # Red Color
@@ -651,12 +758,23 @@ class ModernUI:
 
         ttk.Label(red_color_frame, text="Red Color:").pack(side="left", padx=5)
 
-        red_color_var = tk.StringVar(value=self.app.config.get('red_color', 'rgba(251,98,76,255)'))
-        red_color_entry = ttk.Entry(red_color_frame, textvariable=red_color_var, width=20)
+        red_color_var = tk.StringVar(
+            value=self.app.config.get("red_color", "rgba(251,98,76,255)")
+        )
+        red_color_entry = ttk.Entry(
+            red_color_frame, textvariable=red_color_var, width=20
+        )
         red_color_entry.pack(side="left", padx=5)
 
         # แสดงตัวอย่างสีแดง
-        red_color_sample = tk.Canvas(red_color_frame, width=30, height=20, bg="#FB624C", highlightthickness=1, highlightbackground="black")
+        red_color_sample = tk.Canvas(
+            red_color_frame,
+            width=30,
+            height=20,
+            bg="#FB624C",
+            highlightthickness=1,
+            highlightbackground="black",
+        )
         red_color_sample.pack(side="left", padx=5)
 
         # White Color
@@ -665,28 +783,43 @@ class ModernUI:
 
         ttk.Label(white_color_frame, text="White Color:").pack(side="left", padx=5)
 
-        white_color_var = tk.StringVar(value=self.app.config.get('white_color', 'rgba(255,255,255,255)'))
-        white_color_entry = ttk.Entry(white_color_frame, textvariable=white_color_var, width=20)
+        white_color_var = tk.StringVar(
+            value=self.app.config.get("white_color", "rgba(255,255,255,255)")
+        )
+        white_color_entry = ttk.Entry(
+            white_color_frame, textvariable=white_color_var, width=20
+        )
         white_color_entry.pack(side="left", padx=5)
 
         # แสดงตัวอย่างสีขาว
-        white_color_sample = tk.Canvas(white_color_frame, width=30, height=20, bg="#FFFFFF", highlightthickness=1, highlightbackground="black")
+        white_color_sample = tk.Canvas(
+            white_color_frame,
+            width=30,
+            height=20,
+            bg="#FFFFFF",
+            highlightthickness=1,
+            highlightbackground="black",
+        )
         white_color_sample.pack(side="left", padx=5)
 
         # ปุ่มตรวจจับสีอัตโนมัติ
         auto_detect_frame = ttk.Frame(color_settings_frame)
         auto_detect_frame.pack(fill="x", padx=5, pady=5)
 
-        ttk.Button(auto_detect_frame, text="Auto Detect Colors", command=self.auto_detect_colors).pack(side="left", padx=5)
+        ttk.Button(
+            auto_detect_frame,
+            text="Auto Detect Colors",
+            command=self.auto_detect_colors,
+        ).pack(side="left", padx=5)
 
         # สร้างฟังก์ชันเพื่อเก็บการตั้งค่าทั้งหมด
         def get_detection_settings():
             return {
-                'green_tolerance': color_var.get(),
-                'line_threshold': line_var.get(),
-                'green_color': green_color_var.get(),
-                'red_color': red_color_var.get(),
-                'white_color': white_color_var.get(),
+                "green_tolerance": color_var.get(),
+                "line_threshold": line_var.get(),
+                "green_color": green_color_var.get(),
+                "red_color": red_color_var.get(),
+                "white_color": white_color_var.get(),
             }
 
         # เก็บฟังก์ชันไว้ในออบเจ็กต์เพื่อเรียกใช้ภายหลัง
@@ -704,9 +837,24 @@ class ModernUI:
 
         ttk.Label(start_hotkey_frame, text="Start Hotkey:").pack(side="left", padx=5)
 
-        start_hotkey_var = tk.StringVar(value=self.app.config.get('start_hotkey', 'f6'))
-        start_hotkey_combo = ttk.Combobox(start_hotkey_frame, textvariable=start_hotkey_var, state="readonly")
-        start_hotkey_combo["values"] = ("f1", "f2", "f3", "f4", "f5", "f6", "f7", "f8", "f9", "f10", "f11", "f12")
+        start_hotkey_var = tk.StringVar(value=self.app.config.get("start_hotkey", "f6"))
+        start_hotkey_combo = ttk.Combobox(
+            start_hotkey_frame, textvariable=start_hotkey_var, state="readonly"
+        )
+        start_hotkey_combo["values"] = (
+            "f1",
+            "f2",
+            "f3",
+            "f4",
+            "f5",
+            "f6",
+            "f7",
+            "f8",
+            "f9",
+            "f10",
+            "f11",
+            "f12",
+        )
         start_hotkey_combo.pack(side="left", padx=5)
 
         # Stop Hotkey
@@ -715,9 +863,24 @@ class ModernUI:
 
         ttk.Label(stop_hotkey_frame, text="Stop Hotkey:").pack(side="left", padx=5)
 
-        stop_hotkey_var = tk.StringVar(value=self.app.config.get('stop_hotkey', 'f10'))
-        stop_hotkey_combo = ttk.Combobox(stop_hotkey_frame, textvariable=stop_hotkey_var, state="readonly")
-        stop_hotkey_combo["values"] = ("f1", "f2", "f3", "f4", "f5", "f6", "f7", "f8", "f9", "f10", "f11", "f12")
+        stop_hotkey_var = tk.StringVar(value=self.app.config.get("stop_hotkey", "f10"))
+        stop_hotkey_combo = ttk.Combobox(
+            stop_hotkey_frame, textvariable=stop_hotkey_var, state="readonly"
+        )
+        stop_hotkey_combo["values"] = (
+            "f1",
+            "f2",
+            "f3",
+            "f4",
+            "f5",
+            "f6",
+            "f7",
+            "f8",
+            "f9",
+            "f10",
+            "f11",
+            "f12",
+        )
         stop_hotkey_combo.pack(side="left", padx=5)
 
         # Fishing Key
@@ -726,8 +889,10 @@ class ModernUI:
 
         ttk.Label(fishing_key_frame, text="Fishing Key:").pack(side="left", padx=5)
 
-        fishing_key_var = tk.StringVar(value=self.app.config.get('fishing_key', 'e'))
-        fishing_key_combo = ttk.Combobox(fishing_key_frame, textvariable=fishing_key_var, state="readonly")
+        fishing_key_var = tk.StringVar(value=self.app.config.get("fishing_key", "e"))
+        fishing_key_combo = ttk.Combobox(
+            fishing_key_frame, textvariable=fishing_key_var, state="readonly"
+        )
         fishing_key_combo["values"] = tuple("abcdefghijklmnopqrstuvwxyz0123456789")
         fishing_key_combo.pack(side="left", padx=5)
 
@@ -740,16 +905,16 @@ class ModernUI:
             text="Note: Changes to hotkeys will take effect after restarting the application.",
             font=("Arial", 9),
             foreground=self.theme_manager.warning_color,
-            wraplength=400
+            wraplength=400,
         )
         description_text.pack(padx=5, pady=5)
 
         # สร้างฟังก์ชันเพื่อเก็บการตั้งค่าทั้งหมด
         def get_hotkey_settings():
             return {
-                'start_hotkey': start_hotkey_var.get(),
-                'stop_hotkey': stop_hotkey_var.get(),
-                'fishing_key': fishing_key_var.get(),
+                "start_hotkey": start_hotkey_var.get(),
+                "stop_hotkey": stop_hotkey_var.get(),
+                "fishing_key": fishing_key_var.get(),
             }
 
         # เก็บฟังก์ชันไว้ในออบเจ็กต์เพื่อเรียกใช้ภายหลัง
@@ -765,11 +930,13 @@ class ModernUI:
         auto_restart_frame = ttk.Frame(advanced_frame)
         auto_restart_frame.pack(fill="x", padx=5, pady=5)
 
-        auto_restart_var = tk.BooleanVar(value=self.app.config.get('auto_restart', False))
+        auto_restart_var = tk.BooleanVar(
+            value=self.app.config.get("auto_restart", False)
+        )
         auto_restart_check = ttk.Checkbutton(
-            auto_restart_frame, 
-            text="Auto Restart Fishing (when no line detected)", 
-            variable=auto_restart_var
+            auto_restart_frame,
+            text="Auto Restart Fishing (when no line detected)",
+            variable=auto_restart_var,
         )
         auto_restart_check.pack(side="left", padx=5)
 
@@ -777,11 +944,11 @@ class ModernUI:
         auto_start_frame = ttk.Frame(advanced_frame)
         auto_start_frame.pack(fill="x", padx=5, pady=5)
 
-        auto_start_var = tk.BooleanVar(value=self.app.config.get('auto_start', False))
+        auto_start_var = tk.BooleanVar(value=self.app.config.get("auto_start", False))
         auto_start_check = ttk.Checkbutton(
-            auto_start_frame, 
-            text="Auto Start on Application Launch", 
-            variable=auto_start_var
+            auto_start_frame,
+            text="Auto Start on Application Launch",
+            variable=auto_start_var,
         )
         auto_start_check.pack(side="left", padx=5)
 
@@ -789,11 +956,9 @@ class ModernUI:
         debug_frame = ttk.Frame(advanced_frame)
         debug_frame.pack(fill="x", padx=5, pady=5)
 
-        debug_var = tk.BooleanVar(value=self.app.config.get('debug_mode', False))
+        debug_var = tk.BooleanVar(value=self.app.config.get("debug_mode", False))
         debug_check = ttk.Checkbutton(
-            debug_frame, 
-            text="Enable Debug Mode", 
-            variable=debug_var
+            debug_frame, text="Enable Debug Mode", variable=debug_var
         )
         debug_check.pack(side="left", padx=5)
 
@@ -806,7 +971,7 @@ class ModernUI:
             text="Warning: Advanced settings may affect performance or stability. Use with caution.",
             font=("Arial", 9, "bold"),
             foreground=self.theme_manager.warning_color,
-            wraplength=400
+            wraplength=400,
         )
         warning_text.pack(padx=5, pady=5)
 
@@ -817,15 +982,19 @@ class ModernUI:
         backup_buttons = ttk.Frame(backup_frame)
         backup_buttons.pack(fill="x", padx=5, pady=5)
 
-        ttk.Button(backup_buttons, text="Backup Settings", command=self.backup_settings).pack(side="left", padx=5)
-        ttk.Button(backup_buttons, text="Restore Settings", command=self.restore_settings).pack(side="left", padx=5)
+        ttk.Button(
+            backup_buttons, text="Backup Settings", command=self.backup_settings
+        ).pack(side="left", padx=5)
+        ttk.Button(
+            backup_buttons, text="Restore Settings", command=self.restore_settings
+        ).pack(side="left", padx=5)
 
         # สร้างฟังก์ชันเพื่อเก็บการตั้งค่าทั้งหมด
         def get_advanced_settings():
             return {
-                'auto_restart': auto_restart_var.get(),
-                'auto_start': auto_start_var.get(),
-                'debug_mode': debug_var.get(),
+                "auto_restart": auto_restart_var.get(),
+                "auto_start": auto_start_var.get(),
+                "debug_mode": debug_var.get(),
             }
 
         # เก็บฟังก์ชันไว้ในออบเจ็กต์เพื่อเรียกใช้ภายหลัง
@@ -838,9 +1007,7 @@ class ModernUI:
         help_header.pack(fill="x", padx=10, pady=10)
 
         ttk.Label(
-            help_header,
-            text="Fishing Master Pro Help",
-            font=("Arial", 14, "bold")
+            help_header, text="Fishing Master Pro Help", font=("Arial", 14, "bold")
         ).pack(pady=5)
 
         # สร้าง Notebook สำหรับแบ่งหมวดหมู่ความช่วยเหลือ
@@ -1009,12 +1176,12 @@ A: Yes, go to Settings > Hotkeys to customize your keyboard shortcuts.
         about_content = ttk.Label(
             about_frame,
             text="Fishing Master Pro v1.0.0\n\n"
-                 "An intelligent fishing assistant for gamers\n"
-                 "© 2025 All rights reserved.\n\n"
-                 "Developed by AI Team\n\n"
-                 "Contact: support@fishingmasterpro.com",
+            "An intelligent fishing assistant for gamers\n"
+            "© 2025 All rights reserved.\n\n"
+            "Developed by AI Team\n\n"
+            "Contact: support@fishingmasterpro.com",
             justify=tk.CENTER,
-            font=("Arial", 10)
+            font=("Arial", 10),
         )
         about_content.pack(pady=10)
 
@@ -1022,8 +1189,12 @@ A: Yes, go to Settings > Hotkeys to customize your keyboard shortcuts.
         button_frame = ttk.Frame(about_frame)
         button_frame.pack(pady=10)
 
-        ttk.Button(button_frame, text="Check for Updates", command=self.check_for_updates).pack(side="left", padx=5)
-        ttk.Button(button_frame, text="Visit Website", command=self.visit_website).pack(side="left", padx=5)
+        ttk.Button(
+            button_frame, text="Check for Updates", command=self.check_for_updates
+        ).pack(side="left", padx=5)
+        ttk.Button(button_frame, text="Visit Website", command=self.visit_website).pack(
+            side="left", padx=5
+        )
 
     # ฟังก์ชันการทำงานต่างๆ
     def toggle_theme(self):
@@ -1042,7 +1213,7 @@ A: Yes, go to Settings > Hotkeys to customize your keyboard shortcuts.
             "success": self.theme_manager.secondary_color,
             "danger": self.theme_manager.warning_color,
             "warning": "#f39c12",  # สีส้ม
-            "inactive": "#7f8c8d"   # สีเทา
+            "inactive": "#7f8c8d",  # สีเทา
         }
 
         color = color_map.get(status_type, self.theme_manager.primary_color)
@@ -1050,7 +1221,9 @@ A: Yes, go to Settings > Hotkeys to customize your keyboard shortcuts.
         # อัปเดตตัวบ่งชี้สถานะและข้อความ
         if self.status_indicator and self.status_text:
             self.status_canvas.itemconfig(self.status_indicator, fill=color)
-            self.status_canvas.itemconfig(self.status_text, text=text, fill=self.theme_manager.text_color)
+            self.status_canvas.itemconfig(
+                self.status_text, text=text, fill=self.theme_manager.text_color
+            )
 
         # อัปเดตสถานะในตัวจำลองเกจ
         if self.gauge_visualizer:
@@ -1110,9 +1283,7 @@ A: Yes, go to Settings > Hotkeys to customize your keyboard shortcuts.
 
             # แสดงภาพ
             self.sample_canvas.create_image(
-                canvas_width // 2, 
-                new_height // 2, 
-                image=self.sample_photo
+                canvas_width // 2, new_height // 2, image=self.sample_photo
             )
         except Exception as e:
             print(f"Error updating sample image: {e}")
@@ -1129,7 +1300,7 @@ A: Yes, go to Settings > Hotkeys to customize your keyboard shortcuts.
         # ถ้ามีการรีเซ็ตขณะกำลังทำงานอยู่
         if self.app.running:
             # รีเซ็ตตัวนับในเซสชันปัจจุบัน
-            self.app.analytics.current_session['catches'] = 0
+            self.app.analytics.current_session["catches"] = 0
 
     ### modules/ui/modern_ui.py (continued)
     def export_statistics(self):
@@ -1594,8 +1765,3 @@ A: Yes, go to Settings > Hotkeys to customize your keyboard shortcuts.
 
         # เรียกตัวเองทุก 1 วินาที
         self.root.after(1000, self.update_session_time)
-
-
-
-
-

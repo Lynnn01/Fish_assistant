@@ -30,27 +30,27 @@ class FishingBotApp:
         self.config_manager = ConfigManager()
         self.config = self.config_manager.load_config()
 
-        # สร้าง Hotkey Manager
-        self.hotkey_manager = HotkeyManager(self)
-
-        # สร้าง Detector
-        self.detector = FishingDetector(self)
-
         # สร้างระบบเก็บสถิติ
         self.analytics = AnalyticsTracker()
-
-        # สร้าง UI
-        self.ui = ModernUI(self)
 
         # สถานะโปรแกรม
         self.running = False
         self.detection_thread = None
 
+        # สร้าง UI เปล่าๆ ก่อน (ยังไม่มีการ build)
+        self.ui = ModernUI(self)
+
+        # สร้าง Detector
+        self.detector = FishingDetector(self)
+
+        # สร้าง Hotkey Manager
+        self.hotkey_manager = HotkeyManager(self)
+
+        # ตอนนี้ถึงให้ UI build อินเตอร์เฟซ
+        self.ui.build_interface()
+
         # ตั้งค่าการปิดโปรแกรม
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
-
-        # เริ่มต้น UI Animation
-        self.ui.start_animations()
 
     def start_fishing(self):
         """เริ่มการทำงานของบอท"""

@@ -1,0 +1,20 @@
+{
+    "theme": "light",
+    "animation_speed": 5,
+    "green_tolerance": 30,
+    "line_threshold": 200,
+    "action_cooldown": 0.1,
+    "catch_cooldown": 0.5,
+    "double_click": false,
+    "double_click_delay": 0.1,
+    "green_color": "rgba(83,250,83,255)",
+    "red_color": "rgba(251,98,76,255)",
+    "white_color": "rgba(255,255,255,255)",
+    "start_hotkey": "f6",
+    "stop_hotkey": "f10",
+    "fishing_key": "e",
+    "auto_restart": false,
+    "auto_start": false,
+    "sound_alerts": true,
+    "minimize_to_tray": false
+}
