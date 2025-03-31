@@ -3,7 +3,7 @@ import threading
 import keyboard
 import os
 
-from ui import EnhancedUI
+from ui import PixelatedUI
 from detector import GaugeDetector
 
 
@@ -11,7 +11,7 @@ class FishingBot:
     def __init__(self, root):
         self.root = root
         self.root.title("Fishing Master Bot")
-        self.root.geometry("450x580")
+        self.root.geometry("430x770")
         self.root.resizable(False, False)
 
         # สถานะโปรแกรม
@@ -20,7 +20,7 @@ class FishingBot:
         self.detection_thread = None
 
         # สร้าง UI
-        self.ui = EnhancedUI(root, self)
+        self.ui = PixelatedUI(root, self)
 
         # สร้างตัวตรวจจับ
         self.detector = GaugeDetector(self)

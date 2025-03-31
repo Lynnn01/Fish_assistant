@@ -262,7 +262,7 @@ class GaugeDetector:
                         ui.update_status("Incomplete gauge detected", "warning")
 
                         # กดทุก 4 วินาที
-                        if current_time - last_missing_gauge_click_time >= 4.0:
+                        if current_time - last_missing_gauge_click_time >= 4.5:
                             pyautogui.click()
                             last_missing_gauge_click_time = current_time
                             ui.update_status(
@@ -276,7 +276,7 @@ class GaugeDetector:
                     if gauge_was_detected and (
                         current_time - last_line_detected_time >= 1.0
                     ):
-                        if current_time - last_missing_gauge_click_time >= 4.0:
+                        if current_time - last_missing_gauge_click_time >= 4.5:
                             pyautogui.click()
                             last_missing_gauge_click_time = current_time
                             ui.update_status("No gauge - Clicking every 4s", "warning")
