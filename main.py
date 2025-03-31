@@ -1,17 +1,17 @@
 import tkinter as tk
-from tkinter import ttk
 import threading
 import keyboard
+import os
 
+from ui import EnhancedUI
 from detector import GaugeDetector
-from ui import MinimalUI
 
 
 class FishingBot:
     def __init__(self, root):
         self.root = root
-        self.root.title("Modular Fishing Bot")
-        self.root.geometry("400x300")
+        self.root.title("Fishing Master Bot")
+        self.root.geometry("450x580")
         self.root.resizable(False, False)
 
         # สถานะโปรแกรม
@@ -20,7 +20,7 @@ class FishingBot:
         self.detection_thread = None
 
         # สร้าง UI
-        self.ui = MinimalUI(root, self)
+        self.ui = EnhancedUI(root, self)
 
         # สร้างตัวตรวจจับ
         self.detector = GaugeDetector(self)
@@ -60,7 +60,7 @@ class FishingBot:
         if self.detection_thread and self.detection_thread.is_alive():
             self.detection_thread.join(timeout=1.0)
 
-        self.ui.update_status("Stopped", "warning")
+        self.ui.update_status("Stopped", "danger")
         self.ui.set_button_states("normal", "normal", "disabled")
 
     def fishing_loop(self):
@@ -70,6 +70,7 @@ class FishingBot:
     def on_closing(self):
         """จัดการเมื่อปิดโปรแกรม"""
         self.stop_fishing()
+        self.ui.stop_animation()
         self.root.destroy()
 
 

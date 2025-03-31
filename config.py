@@ -4,7 +4,7 @@ class BotConfig:
     def __init__(self):
         # การตั้งค่าการตรวจจับ
         self.red_zone_threshold = 0.2  # ระยะห่างจากขอบที่ถือว่าเป็นโซนแดง (0.0-1.0)
-        self.buffer_zone_size = 0.05  # โซนกันชนก่อนถึงโซนแดง (0.0-1.0)
+        self.buffer_zone_size = 0.15  # โซนกันชนก่อนถึงโซนแดง (0.0-1.0)
         self.line_threshold = 200  # ความสว่างขั้นต่ำสำหรับเส้นขาว (0-255)
         self.color_threshold = 30  # ความแตกต่างของสีขั้นต่ำ
 
