@@ -17,9 +17,9 @@ class PixelGauge:
         self.colors = colors
 
         # ค่าสีที่ใช้ในเกจ
-        self.success_color = colors.get("success", "#a3be8c")  # สีเขียว
-        self.danger_color = colors.get("danger", "#bf616a")  # สีแดง
-        self.warning_color = colors.get("warning", "#ebcb8b")  # สีเหลือง
+        self.success_color = colors.get("success", "#1de887")  # สีเขียว
+        self.danger_color = colors.get("danger", "#c2002e")  # สีแดง
+        self.warning_color = colors.get("warning", "#f9e04b")  # สีเหลือง
         self.bg_color = colors.get("bg", "#2e3440")  # สีพื้นหลัง
         self.accent_color = colors.get("accent", "#88c0d0")  # สีเน้น
         self.crt_color = colors.get("crt", "#eceff4")  # สีแสง CRT
@@ -670,7 +670,6 @@ class PixelGauge:
 
         # เริ่มอนิเมชัน
         animate_bite()
-
 
     def set_gauge_color(
         self,

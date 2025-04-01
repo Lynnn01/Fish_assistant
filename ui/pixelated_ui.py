@@ -49,9 +49,9 @@ class PixelatedUI:
         )  # ฟอนต์แบบพิกเซล
 
         # ตั้งชื่อและไอคอนหน้าต่าง
-        self.root.title("Retro Fishing Bot")
+        self.root.title("Fishing Assistant")
         try:
-            self.root.iconbitmap("fish_icon.ico")
+            self.root.iconbitmap("assets/fish.ico")
         except:
             pass  # ไม่มีไอคอน
 
@@ -91,7 +91,7 @@ class PixelatedUI:
         title_label = tk.Label(
             header_frame,
             text="╔═════════════════════════╗\n"
-            "║  RETRO FISHING MASTER   ║\n"
+            "║    FISHING ASSISTANT    ║\n"
             "╚═════════════════════════╝",
             font=(UI_CONSTANTS["FONT_FAMILY"], 14, "bold"),
             fg=self.crt_color,

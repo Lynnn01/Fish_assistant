@@ -14,9 +14,9 @@ from config import BotConfig
 class FishingBot:
     def __init__(self, root):
         self.root = root
-        self.root.title("Retro Fishing Master")
-        self.root.geometry("430x770")
-        self.root.resizable(False, False)
+        self.root.title("Fishing Assistant")
+        self.root.geometry("430x700")
+        self.root.resizable(True, True)
 
         # โหลดการตั้งค่า
         self.config = BotConfig()
