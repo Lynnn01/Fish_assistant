@@ -1,53 +1,57 @@
-class BotConfig:
-    """คลาสสำหรับเก็บการตั้งค่าของบอท"""
+import json
 
-    def __init__(self):
+
+class BotConfig:
+    """คลาสสำหรับเก็บและจัดการการตั้งค่าของบอท"""
+
+    def __init__(self, config_file=None):
         # การตั้งค่าการตรวจจับ
-        self.red_zone_threshold = 0.2  # ระยะห่างจากขอบที่ถือว่าเป็นโซนแดง (0.0-1.0)
-        self.buffer_zone_size = 0.13  # โซนกันชนก่อนถึงโซนแดง (0.0-1.0)
-        self.line_threshold = 200  # ความสว่างขั้นต่ำสำหรับเส้นขาว (0-255)
-        self.color_threshold = 30  # ความแตกต่างของสีขั้นต่ำ
+        self.red_zone_threshold = 0.2
+        self.buffer_zone_size = 0.13
+        self.line_threshold = 200
+        self.color_threshold = 30
 
         # การตั้งค่าการคลิก
-        self.action_cooldown = 0.1  # ระยะเวลาระหว่างการคลิกแต่ละครั้ง (วินาที)
+        self.action_cooldown = 0.1
 
         # การตั้งค่าการจัดการเมื่อเกจหายไป
-        self.first_click_delay = 1.0  # ระยะเวลารอก่อนคลิกครั้งแรกหลังเกจหาย (วินาที)
-        self.periodic_click_interval = 4.0  # ระยะเวลาระหว่างการคลิกเมื่อเกจหายไป (วินาที)
+        self.first_click_delay = 1.0
+        self.periodic_click_interval = 4.0
 
         # การตั้งค่า UI
         self.ui_colors = {
-            "primary": "#3498db",  # สีน้ำเงิน
-            "success": "#2ecc71",  # สีเขียว
-            "danger": "#e74c3c",  # สีแดง
-            "warning": "#f39c12",  # สีส้ม
-            "background": "#f5f5f5",  # สีพื้นหลัง
+            "primary": "#3498db",
+            "success": "#2ecc71",
+            "danger": "#e74c3c",
+            "warning": "#f39c12",
+            "background": "#f5f5f5",
         }
 
-    def load_from_file(self, filename):
-        """โหลดการตั้งค่าจากไฟล์"""
-        try:
-            import json
+        self.config_file = config_file
+        if config_file:
+            self.load_from_file(config_file)
 
-            with open(filename, "r") as file:
+    def load_from_file(self, filename):
+        """โหลดการตั้งค่าจากไฟล์ JSON"""
+        try:
+            with open(filename, "r", encoding="utf-8") as file:
                 config_data = json.load(file)
 
-            # อัปเดตการตั้งค่าจากไฟล์
             for key, value in config_data.items():
                 if hasattr(self, key):
                     setattr(self, key, value)
-
+            print("Configuration loaded successfully.")
             return True
+        except FileNotFoundError:
+            print("Config file not found. Using default settings.")
+            return False
         except Exception as e:
             print(f"Error loading config: {e}")
             return False
 
     def save_to_file(self, filename):
-        """บันทึกการตั้งค่าลงไฟล์"""
+        """บันทึกการตั้งค่าลงไฟล์ JSON"""
         try:
-            import json
-
-            # สร้าง dictionary จากคุณสมบัติของคลาส
             config_data = {
                 "red_zone_threshold": self.red_zone_threshold,
                 "buffer_zone_size": self.buffer_zone_size,
@@ -59,10 +63,15 @@ class BotConfig:
                 "ui_colors": self.ui_colors,
             }
 
-            with open(filename, "w") as file:
+            with open(filename, "w", encoding="utf-8") as file:
                 json.dump(config_data, file, indent=4)
-
+            print("Configuration saved successfully.")
             return True
         except Exception as e:
             print(f"Error saving config: {e}")
             return False
+
+
+# ตัวอย่างการใช้งาน
+config = BotConfig("config.json")
+config.save_to_file("config.json")  # บันทึกค่าการตั้งค่าไปที่ไฟล์
