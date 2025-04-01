@@ -7,17 +7,47 @@ import time
 class GaugeDetector:
     def __init__(self, app):
         self.app = app
-        self.config = app.config  # ใช้การตั้งค่าจาก app
 
-        # นำค่าจาก config มาใช้
-        self.red_zone_threshold = self.config.red_zone_threshold
-        self.buffer_zone_size = self.config.buffer_zone_size
-        self.line_threshold = self.config.line_threshold
-        self.color_threshold = self.config.color_threshold
+        # ใช้ค่าจาก ConfigManager หากมี หรือใช้ค่าเริ่มต้นถ้าไม่มี
+        if hasattr(app, "config_manager"):
+            config = app.config_manager.config
+            self.red_zone_threshold = config.get("red_zone_threshold", 0.2)
+            self.buffer_zone_size = config.get("buffer_zone_size", 0.13)
+            self.line_threshold = config.get("line_threshold", 200)
+            self.color_threshold = config.get("color_threshold", 30)
+            self.action_cooldown = config.get("action_cooldown", 0.1)
+            self.first_click_delay = config.get("first_click_delay", 1.0)
+            self.periodic_click_interval = config.get("periodic_click_interval", 4.0)
+        elif hasattr(app, "config"):
+            # ใช้การตั้งค่าจาก app.config ตามโค้ดเดิม
+            self.config = app.config
+            self.red_zone_threshold = self.config.red_zone_threshold
+            self.buffer_zone_size = self.config.buffer_zone_size
+            self.line_threshold = self.config.line_threshold
+            self.color_threshold = self.config.color_threshold
+            self.action_cooldown = self.config.action_cooldown
+            self.first_click_delay = (
+                self.config.first_click_delay
+                if hasattr(self.config, "first_click_delay")
+                else 1.0
+            )
+            self.periodic_click_interval = (
+                self.config.periodic_click_interval
+                if hasattr(self.config, "periodic_click_interval")
+                else 4.0
+            )
+        else:
+            # ค่าเริ่มต้นถ้าไม่มีการตั้งค่าใดๆ
+            self.red_zone_threshold = 0.2
+            self.buffer_zone_size = 0.13
+            self.line_threshold = 200
+            self.color_threshold = 30
+            self.action_cooldown = 0.1
+            self.first_click_delay = 1.0
+            self.periodic_click_interval = 4.0
 
         # ตัวแปรควบคุมการคลิก
         self.last_action_time = time.time()
-        self.action_cooldown = self.config.action_cooldown
 
     def detect_color_region(self, image, line_x, region_y):
         """ตรวจสอบว่าเส้นขาวอยู่ในโซนสีใด"""
@@ -32,8 +62,8 @@ class GaugeDetector:
             green_distance = np.sum(np.abs(color.astype(np.int32) - green_target))
             red_distance = np.sum(np.abs(color.astype(np.int32) - red_target))
 
-            # กำหนดค่าเกณฑ์ (threshold) สำหรับความใกล้เคียงของสี
-            color_threshold = 150  # ปรับค่านี้ตามความเหมาะสม
+            # ใช้ค่าเกณฑ์สีจากการตั้งค่า
+            color_threshold = self.color_threshold
 
             # ตรวจสอบว่าใกล้เคียงกับสีเขียวหรือสีแดง
             if green_distance < color_threshold and green_distance < red_distance:
@@ -75,7 +105,7 @@ class GaugeDetector:
         gauge_width = x2 - x1
         gauge_height = y2 - y1
 
-        # โซนที่ปลอดภัยสำหรับคลิก
+        # โซนที่ปลอดภัยสำหรับคลิก - ใช้ค่าที่อาจเปลี่ยนแปลงได้จากการตั้งค่า
         safe_zone_min = self.red_zone_threshold + self.buffer_zone_size
         safe_zone_max = 1.0 - self.red_zone_threshold - self.buffer_zone_size
 
@@ -86,6 +116,25 @@ class GaugeDetector:
 
         while self.app.running:
             try:
+                # ตรวจสอบว่ามีการเปลี่ยนแปลงค่าจากหน้าตั้งค่าหรือไม่
+                if hasattr(self.app, "config_manager"):
+                    # อัปเดตค่าตั้งต้นจาก config ล่าสุด
+                    config = self.app.config_manager.config
+                    self.red_zone_threshold = config.get("red_zone_threshold", 0.2)
+                    self.buffer_zone_size = config.get("buffer_zone_size", 0.13)
+                    self.line_threshold = config.get("line_threshold", 200)
+                    self.color_threshold = config.get("color_threshold", 30)
+                    self.action_cooldown = config.get("action_cooldown", 0.1)
+                    self.periodic_click_interval = config.get(
+                        "periodic_click_interval", 4.0
+                    )
+
+                    # คำนวณค่าโซนใหม่
+                    safe_zone_min = self.red_zone_threshold + self.buffer_zone_size
+                    safe_zone_max = (
+                        1.0 - self.red_zone_threshold - self.buffer_zone_size
+                    )
+
                 # จับภาพหน้าจอ
                 screenshot = pyautogui.screenshot(region=(x1, y1, x2 - x1, y2 - y1))
                 screenshot_cv = cv2.cvtColor(np.array(screenshot), cv2.COLOR_RGB2BGR)
@@ -171,25 +220,35 @@ class GaugeDetector:
                         # พบเส้นขาวแต่ไม่พบสีเขียวหรือสีแดง ถือว่าไม่พบเกจที่สมบูรณ์
                         ui.update_status("Incomplete gauge detected", "warning")
 
-                        # กดทุก 4 วินาที
-                        if current_time - last_missing_gauge_click_time >= 4.5:
+                        # ใช้ค่า periodic_click_interval จากการตั้งค่า
+                        if (
+                            current_time - last_missing_gauge_click_time
+                            >= self.periodic_click_interval
+                        ):
                             pyautogui.click()
                             last_missing_gauge_click_time = current_time
                             ui.update_status(
-                                "Incomplete gauge - Clicking every 4s", "warning"
+                                f"Incomplete gauge - Clicking every {self.periodic_click_interval}s",
+                                "warning",
                             )
                 else:
                     # ไม่พบเส้นขาว
                     ui.update_status("No line detected", "warning")
 
-                    # กดทุก 4 วินาที ถ้าเคยพบเกจมาก่อน
+                    # กดเมื่อผ่านไประยะเวลาตามที่กำหนด ถ้าเคยพบเกจมาก่อน
                     if gauge_was_detected and (
-                        current_time - last_line_detected_time >= 1.0
+                        current_time - last_line_detected_time >= self.first_click_delay
                     ):
-                        if current_time - last_missing_gauge_click_time >= 4.5:
+                        if (
+                            current_time - last_missing_gauge_click_time
+                            >= self.periodic_click_interval
+                        ):
                             pyautogui.click()
                             last_missing_gauge_click_time = current_time
-                            ui.update_status("No gauge - Clicking every 4s", "warning")
+                            ui.update_status(
+                                f"No gauge - Clicking every {self.periodic_click_interval}s",
+                                "warning",
+                            )
 
                 # หน่วงเวลาเล็กน้อยเพื่อลดการใช้ CPU
                 time.sleep(0.01)

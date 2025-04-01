@@ -7,7 +7,6 @@ import time
 
 from ui.gauge_widget import PixelGauge
 from ui.progress_bar import PixelProgressBar
-from ui.tooltip import PixelTooltip
 from ui.styles import apply_styles
 from utils.constants import PIXEL_COLORS, UI_CONSTANTS, TIPS
 
@@ -124,7 +123,7 @@ class PixelatedUI:
             text=TIPS["GAUGE_SELECTION"],
             fg=self.crt_color,
             bg=self.bg_color,
-            font=(UI_CONSTANTS["FONT_FAMILY"], 10, "bold"),
+            font=(UI_CONSTANTS["FONT_FAMILY"], 8, "bold"),
         )
         tip_text.pack(pady=5)
 
@@ -352,10 +351,6 @@ class PixelatedUI:
             size = f"{x2-x1}x{y2-y1}"
             self.region_label.config(text=f"({x1},{y1})-({x2},{y2}) [{size}]")
 
-            # แสดง tooltip แบบพิกเซล
-            colors = {"bg": self.bg_color, "text": self.crt_color}
-            PixelTooltip(self.root, f"REGION SELECTED: {size}", colors)
-
             # แสดงผลการเลือกพื้นที่สำเร็จ
             self.progress_bar.pulse(100, 1000)
 
@@ -436,7 +431,7 @@ class PixelatedUI:
                 self.update_line_position(position)
 
                 # สุ่มสร้างเหตุการณ์ปลากระตุกเพื่อการสาธิต
-                if random.random() < 0.002:  # 0.2% โอกาสต่อเฟรม
+                if random.random() < 0.005:  # 0.2% โอกาสต่อเฟรม
                     self.simulate_bite()
 
             # หน่วงเวลาเพื่อการเคลื่อนไหวที่นุ่มนวล
@@ -449,9 +444,3 @@ class PixelatedUI:
 
         # ใช้เกจสำหรับการจำลองการกระตุก
         self.gauge.simulate_bite(start_pos, 0.5, None)
-
-    def show_tooltip(self, message, duration=2000):
-        """แสดง tooltip แบบพิกเซล"""
-        # ใช้คลาส PixelTooltip ที่แยกออกมา
-        colors = {"bg": self.bg_color, "text": self.crt_color}
-        PixelTooltip(self.root, message, colors, duration=duration)
