@@ -1,18 +1,25 @@
 import tkinter as tk
-import threading
 import keyboard
 import os
+import sys
 
-from ui import PixelatedUI
-from detector import GaugeDetector
+# เพิ่มโฟลเดอร์ปัจจุบันในพาธ
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+from ui.pixelated_ui import PixelatedUI
+from detector.gauge_detector import GaugeDetector
+from config import BotConfig
 
 
 class FishingBot:
     def __init__(self, root):
         self.root = root
-        self.root.title("Fishing Master Bot")
+        self.root.title("Retro Fishing Master")
         self.root.geometry("430x770")
         self.root.resizable(False, False)
+
+        # โหลดการตั้งค่า
+        self.config = BotConfig()
 
         # สถานะโปรแกรม
         self.running = False
@@ -33,10 +40,13 @@ class FishingBot:
 
     def select_gauge_region(self):
         """เรียกใช้ฟังก์ชันเลือกพื้นที่เกจ"""
-        region = self.detector.select_region(self.root)
+        from detector.screen_selector import select_region
+
+        region = select_region(self.root)
         if region:
             self.region = region
             self.ui.update_region_info(region)
+            print(f"Region selected: {region}")
             self.ui.set_start_button_state("normal")
             self.ui.update_status("Region selected", "success")
 
@@ -47,6 +57,8 @@ class FishingBot:
             self.ui.update_status("Starting...", "warning")
 
             # เริ่มการจับปลา
+            import threading
+
             self.detection_thread = threading.Thread(target=self.fishing_loop)
             self.detection_thread.daemon = True
             self.detection_thread.start()
