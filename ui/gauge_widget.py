@@ -5,6 +5,7 @@ import time
 
 
 class PixelGauge:
+    # แก้ไข gauge_widget.py
     def __init__(self, parent, colors):
         """
         สร้างเกจแบบพิกเซลอาร์ตสำหรับการตกปลา
@@ -16,13 +17,15 @@ class PixelGauge:
         self.parent = parent
         self.colors = colors
 
-        # ค่าสีที่ใช้ในเกจ
-        self.success_color = colors.get("success", "#1de887")  # สีเขียว
-        self.danger_color = colors.get("danger", "#c2002e")  # สีแดง
-        self.warning_color = colors.get("warning", "#f9e04b")  # สีเหลือง
-        self.bg_color = colors.get("bg", "#2e3440")  # สีพื้นหลัง
-        self.accent_color = colors.get("accent", "#88c0d0")  # สีเน้น
-        self.crt_color = colors.get("crt", "#eceff4")  # สีแสง CRT
+        # ใช้สีจาก colors dictionary หรือใช้ค่าเริ่มต้นถ้าไม่มี
+        # แทนที่จะระบุสีเริ่มต้นในแต่ละบรรทัด ควรใช้สีจาก constants จะดีกว่า
+        # หากแก้ไขให้สมบูรณ์ควรอิมพอร์ต PIXEL_COLORS มาใช้
+        self.success_color = colors.get("success")
+        self.danger_color = colors.get("danger")
+        self.warning_color = colors.get("warning")
+        self.bg_color = colors.get("bg")
+        self.accent_color = colors.get("accent")
+        self.crt_color = colors.get("crt")
 
         # สร้าง Canvas สำหรับเกจ
         self.canvas = tk.Canvas(

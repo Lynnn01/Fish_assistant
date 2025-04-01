@@ -27,7 +27,7 @@ PIXEL_COLORS = {
     "DANGER_RED": "#bf616a",
     "WARNING_YELLOW": "#ebcb8b",
     "BACKGROUND_DARK": "#2e3440",
-    "TEXT_LIGHT": "#eceff4",
+    "TEXT_LIGHT": "#ffffff",
     "PANEL_BG": "#3b4252",
     "ACCENT_BLUE": "#88c0d0",
     "CRT_GREEN": "#00ff00",

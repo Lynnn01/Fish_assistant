@@ -13,6 +13,8 @@ from utils.constants import PIXEL_COLORS, UI_CONSTANTS, TIPS
 
 
 class PixelatedUI:
+    # แก้ไขวิธีการใช้สีใน pixelated_ui.py
+    # แก้ไข __init__ ใน pixelated_ui.py เพิ่มเติม
     def __init__(self, root, app):
         """
         สร้างอินเตอร์เฟซแบบพิกเซลอาร์ตสำหรับโปรแกรม Fishing Bot
@@ -27,7 +29,8 @@ class PixelatedUI:
         # ตั้งค่าให้หน้าต่างอยู่บนสุดเสมอ
         self.root.attributes("-topmost", True)
 
-        # ใช้ค่าสีจาก constants
+        # เก็บ reference ของสีที่ใช้บ่อยไว้เพื่อความสะดวกและประสิทธิภาพ
+        # (เรียกใช้จาก PIXEL_COLORS เพียงครั้งเดียว)
         self.primary_color = PIXEL_COLORS["PRIMARY_BLUE"]
         self.secondary_color = PIXEL_COLORS["SECONDARY_SALMON"]
         self.success_color = PIXEL_COLORS["SUCCESS_GREEN"]
@@ -219,6 +222,8 @@ class PixelatedUI:
         )
         self.stop_button.grid(row=0, column=2, padx=5, pady=5, sticky="ew")
 
+    # แก้ไข method _create_gauge_section ใน pixelated_ui.py
+
     def _create_gauge_section(self, parent):
         """สร้างส่วนแสดงเกจ"""
         gauge_frame = ttk.LabelFrame(
@@ -226,14 +231,14 @@ class PixelatedUI:
         )
         gauge_frame.pack(fill="x", pady=10)
 
-        # ตั้งค่าสีของเกจ
+        # ตั้งค่าสีของเกจจาก constants โดยตรง
         gauge_colors = {
-            "success": self.success_color,
-            "danger": self.danger_color,
-            "warning": self.warning_color,
-            "bg": self.bg_color,
-            "accent": self.accent_color,
-            "crt": self.crt_color,
+            "success": PIXEL_COLORS["SUCCESS_GREEN"],
+            "danger": PIXEL_COLORS["DANGER_RED"],
+            "warning": PIXEL_COLORS["WARNING_YELLOW"],
+            "bg": PIXEL_COLORS["BACKGROUND_DARK"],
+            "accent": PIXEL_COLORS["ACCENT_BLUE"],
+            "crt": PIXEL_COLORS["TEXT_LIGHT"],
         }
 
         # สร้างเกจแบบพิกเซล
@@ -264,8 +269,9 @@ class PixelatedUI:
         zone_label = ttk.Label(right_info, text="ZONE:", style="Pixel.TLabel")
         zone_label.pack(side="left", padx=2)
 
+        # ใช้ style แทนการกำหนดสีโดยตรง
         self.zone_value = ttk.Label(
-            right_info, text="SAFE", foreground=self.success_color
+            right_info, text="SAFE", style="PixelSuccess.TLabel"
         )
         self.zone_value.pack(side="left", padx=2)
 
@@ -299,6 +305,8 @@ class PixelatedUI:
         )
         version_label.pack(side="right")
 
+    # แก้ไข method update_line_position ใน pixelated_ui.py
+
     def update_line_position(self, relative_pos):
         """อัปเดตตำแหน่งเส้นตัวชี้ในเกจ"""
         # ใช้ gauge widget สำหรับการอัปเดตตำแหน่ง
@@ -307,13 +315,13 @@ class PixelatedUI:
         # อัปเดตข้อความตำแหน่ง
         self.position_value.config(text=position_text)
 
-        # อัปเดตข้อความโซน
+        # อัปเดตข้อความโซนด้วย style แทนการกำหนดสีโดยตรง
         if zone_type == "danger":
-            self.zone_value.config(text="DANGER", foreground=self.danger_color)
+            self.zone_value.config(text="DANGER", style="PixelDanger.TLabel")
         elif zone_type == "warning":
-            self.zone_value.config(text="CAUTION", foreground=self.warning_color)
+            self.zone_value.config(text="CAUTION", style="PixelWarning.TLabel")
         else:
-            self.zone_value.config(text="SAFE", foreground=self.success_color)
+            self.zone_value.config(text="SAFE", style="PixelSuccess.TLabel")
 
         # บันทึกตำแหน่งปัจจุบันเพื่อคำนวณความเร็ว
         if hasattr(self, "last_position"):

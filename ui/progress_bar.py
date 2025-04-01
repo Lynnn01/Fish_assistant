@@ -6,6 +6,8 @@ import math
 class PixelProgressBar:
     """Progress bar แบบพิกเซลอาร์ต"""
 
+    # แก้ไข progress_bar.py
+
     def __init__(self, parent, colors, height=15):
         """
         สร้าง progress bar แบบพิกเซลอาร์ต
@@ -16,15 +18,15 @@ class PixelProgressBar:
             height: ความสูงของ progress bar
         """
         self.parent = parent
-        self.colors = colors
 
-        # ดึงค่าสีจาก dictionary
-        self.bg_color = colors.get("bg", "#2e3440")
-        self.text_color = colors.get("text", "#eceff4")
-        self.panel_bg = colors.get("panel_bg", "#3b4252")
-        self.success_color = colors.get("success", "#a3be8c")
-        self.danger_color = colors.get("danger", "#bf616a")
-        self.warning_color = colors.get("warning", "#ebcb8b")
+        # เก็บ reference ของสีทั้งหมด
+        # ไม่จำเป็นต้องมีค่าเริ่มต้นซ้ำซ้อน ควรใช้ค่าจาก constants
+        self.bg_color = colors.get("bg")
+        self.text_color = colors.get("text")
+        self.panel_bg = colors.get("panel_bg")
+        self.success_color = colors.get("success")
+        self.danger_color = colors.get("danger")
+        self.warning_color = colors.get("warning")
 
         # สร้าง Canvas
         self.canvas = tk.Canvas(

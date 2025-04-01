@@ -1,6 +1,7 @@
 from utils.constants import UI_CONSTANTS, PIXEL_COLORS
 
 
+# แก้ไข styles.py เพิ่ม style สำหรับ label ที่มีสีพิเศษ
 def apply_styles(style):
     """
     กำหนดสไตล์ของ UI ทั้งหมด
@@ -75,6 +76,28 @@ def apply_styles(style):
         background=bg_color,
         foreground=accent_color,
         font=(font_family, 12, "bold"),
+    )
+
+    # เพิ่ม style สำหรับ label ที่มีสีพิเศษ
+    style.configure(
+        "PixelSuccess.TLabel",
+        background=bg_color,
+        foreground=success_color,
+        font=(font_family, 10, "bold"),
+    )
+
+    style.configure(
+        "PixelDanger.TLabel",
+        background=bg_color,
+        foreground=danger_color,
+        font=(font_family, 10, "bold"),
+    )
+
+    style.configure(
+        "PixelWarning.TLabel",
+        background=bg_color,
+        foreground=warning_color,
+        font=(font_family, 10, "bold"),
     )
 
     style.configure(

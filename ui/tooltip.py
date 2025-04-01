@@ -5,6 +5,7 @@ import time
 class PixelTooltip:
     """Tooltip แบบพิกเซลอาร์ตพร้อมเอฟเฟกต์ CRT"""
 
+    # แก้ไข tooltip.py
     def __init__(self, root, message, colors, font_family="Courier", duration=2000):
         """
         สร้าง tooltip แบบพิกเซลอาร์ต
@@ -20,9 +21,9 @@ class PixelTooltip:
         self.message = message
         self.duration = duration
 
-        # ดึงค่าสีจาก dictionary
-        self.bg_color = colors.get("bg", "#2e3440")
-        self.text_color = colors.get("text", "#eceff4")
+        # ดึงค่าสีจาก dictionary โดยไม่ต้องระบุค่าเริ่มต้นซ้ำซ้อน
+        self.bg_color = colors.get("bg")
+        self.text_color = colors.get("text")
 
         # สร้าง tooltip
         self.tooltip = None
