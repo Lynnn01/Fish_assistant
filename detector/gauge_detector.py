@@ -2,99 +2,150 @@ import numpy as np
 import pyautogui
 import cv2
 import time
+from utils.constants import DEFAULT_CONFIG
 
 
 class GaugeDetector:
     def __init__(self, app):
         self.app = app
 
-        # ใช้ค่าจาก ConfigManager หากมี หรือใช้ค่าเริ่มต้นถ้าไม่มี
-        if hasattr(app, "config_manager"):
-            config = app.config_manager.config
-            self.red_zone_threshold = config.get("red_zone_threshold", 0.2)
-            self.buffer_zone_size = config.get("buffer_zone_size", 0.13)
-            self.line_threshold = config.get("line_threshold", 200)
-            self.color_threshold = config.get("color_threshold", 30)
-            self.action_cooldown = config.get("action_cooldown", 0.1)
-            self.first_click_delay = config.get("first_click_delay", 1.0)
-            self.periodic_click_interval = config.get("periodic_click_interval", 4.0)
-        elif hasattr(app, "config"):
-            # ใช้การตั้งค่าจาก app.config ตามโค้ดเดิม
-            self.config = app.config
-            self.red_zone_threshold = self.config.red_zone_threshold
-            self.buffer_zone_size = self.config.buffer_zone_size
-            self.line_threshold = self.config.line_threshold
-            self.color_threshold = self.config.color_threshold
-            self.action_cooldown = self.config.action_cooldown
-            self.first_click_delay = (
-                self.config.first_click_delay
-                if hasattr(self.config, "first_click_delay")
-                else 1.0
-            )
-            self.periodic_click_interval = (
-                self.config.periodic_click_interval
-                if hasattr(self.config, "periodic_click_interval")
-                else 4.0
-            )
-        else:
-            # ค่าเริ่มต้นถ้าไม่มีการตั้งค่าใดๆ
-            self.red_zone_threshold = 0.2
-            self.buffer_zone_size = 0.13
-            self.line_threshold = 200
-            self.color_threshold = 30
-            self.action_cooldown = 0.1
-            self.first_click_delay = 1.0
-            self.periodic_click_interval = 4.0
+        # ตั้งค่าเริ่มต้นด้วยค่า DEFAULT_CONFIG
+        self.config = DEFAULT_CONFIG.copy()
 
         # ตัวแปรควบคุมการคลิก
         self.last_action_time = time.time()
 
-    def detect_color_region(self, image, line_x, region_y):
-        """ตรวจสอบว่าเส้นขาวอยู่ในโซนสีใด"""
+    def update_config(self):
+        """อัปเดตค่าการตั้งค่าจาก app.config_manager หากมี"""
         try:
+            if (
+                hasattr(self.app, "config_manager")
+                and self.app.config_manager is not None
+            ):
+                # ตรวจสอบและอัปเดตค่าที่จำเป็น
+                for key in DEFAULT_CONFIG:
+                    if key in self.app.config_manager.config:
+                        self.config[key] = self.app.config_manager.config[key]
+            elif hasattr(self.app, "config") and self.app.config is not None:
+                # ใช้ app.config แบบเดิมหากไม่มี config_manager
+                for key in DEFAULT_CONFIG:
+                    if hasattr(self.app.config, key):
+                        self.config[key] = getattr(self.app.config, key)
+        except Exception as e:
+            print(f"Error updating config: {e}")
+            # ในกรณีที่เกิดข้อผิดพลาด ใช้ค่า DEFAULT_CONFIG
+
+    def detect_color_zone(self, image, line_x, region_y):
+        """ตรวจสอบว่าตำแหน่งที่กำหนดอยู่ในโซนสีใด (แดง/เขียว)"""
+        try:
+            # ตรวจสอบว่าตำแหน่งอยู่ในขอบเขตของภาพ
+            h, w = image.shape[:2]
+            if line_x < 0 or line_x >= w or region_y < 0 or region_y >= h:
+                return "unknown"
+
+            # ดึงค่าสีที่ตำแหน่งนั้น
             color = image[region_y, line_x]  # [B, G, R]
 
-            # กำหนดค่าสีที่ต้องการตรวจจับ (BGR format)
-            green_target = np.array([83, 250, 83])
-            red_target = np.array([76, 98, 251])
-
-            # คำนวณระยะห่างของสี (ยิ่งน้อยยิ่งใกล้เคียง)
-            green_distance = np.sum(np.abs(color.astype(np.int32) - green_target))
-            red_distance = np.sum(np.abs(color.astype(np.int32) - red_target))
-
-            # ใช้ค่าเกณฑ์สีจากการตั้งค่า
-            color_threshold = self.color_threshold
-
-            # ตรวจสอบว่าใกล้เคียงกับสีเขียวหรือสีแดง
-            if green_distance < color_threshold and green_distance < red_distance:
+            # ตรวจสอบว่ามีองค์ประกอบสีเขียวสูงกว่าอย่างชัดเจน
+            if color[1] > 1.5 * max(color[0], color[2]) and color[1] > 100:
                 return "green"
-            elif red_distance < color_threshold and red_distance < green_distance:
+
+            # ตรวจสอบว่ามีองค์ประกอบสีแดงสูงกว่าอย่างชัดเจน
+            if color[2] > 1.5 * max(color[0], color[1]) and color[2] > 100:
                 return "red"
 
-            return "other"
+            return "unknown"
         except Exception as e:
-            print(f"Error in detect_color_region: {e}")
-            return "other"
+            print(f"Error in detect_color_zone: {e}")
+            return "unknown"
 
-    def find_white_line(self, image, start_y, end_y, region_x_min, region_x_max):
+    def find_white_line(self, image):
         """หาตำแหน่งของเส้นขาวแนวตั้ง"""
-        # ดึงภาพในพื้นที่ที่สนใจ
-        roi = image[start_y:end_y, region_x_min:region_x_max]
+        try:
+            # แปลงเป็นโทนสีเทา
+            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-        # แปลงเป็นโทนสีเทา
-        gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
+            # ใช้ค่า line_threshold จากการตั้งค่า
+            line_threshold = self.config.get(
+                "line_threshold", DEFAULT_CONFIG["line_threshold"]
+            )
 
-        # หาเส้นขาว
-        _, thresh = cv2.threshold(gray, self.line_threshold, 255, cv2.THRESH_BINARY)
+            # หาเส้นขาว
+            _, thresh = cv2.threshold(gray, line_threshold, 255, cv2.THRESH_BINARY)
 
-        # หาตำแหน่งของเส้นขาว
-        column_sum = np.sum(thresh, axis=0)
-        if np.max(column_sum) > 0:
-            line_x_local = np.argmax(column_sum)
-            line_x_global = line_x_local + region_x_min
-            return line_x_global
+            # หาตำแหน่งของเส้นแนวตั้ง (คอลัมน์ที่มีพิกเซลสีขาวเยอะที่สุด)
+            column_sum = np.sum(thresh, axis=0)
 
-        return None
+            if np.max(column_sum) > 0:
+                # คืนค่าตำแหน่ง x ที่มีผลรวมสูงสุด
+                return np.argmax(column_sum)
+
+            return None
+        except Exception as e:
+            print(f"Error in find_white_line: {e}")
+            return None
+
+    def check_gauge_components(self, image):
+        """ตรวจสอบองค์ประกอบของเกจ (เส้นขาว, โซนสีเขียว, โซนสีแดง)"""
+        try:
+            h, w = image.shape[:2]
+
+            # 1. หาเส้นขาว
+            white_line_x = self.find_white_line(image)
+            if white_line_x is None:
+                return None, False, False
+
+            # 2. ตรวจหาสีเขียวและสีแดงในภาพ
+            y_middle = h // 2
+
+            found_green = False
+            found_red = False
+
+            # สุ่มตรวจสอบจุดต่างๆ ในแนวนอนเพื่อระบุโซนสี
+            step = max(1, w // 20)  # แบ่งเป็น 20 ส่วน
+
+            for x in range(0, w, step):
+                zone = self.detect_color_zone(image, x, y_middle)
+
+                if zone == "green":
+                    found_green = True
+                elif zone == "red":
+                    found_red = True
+
+                # หากพบทั้งสองสีแล้ว ไม่จำเป็นต้องตรวจสอบเพิ่ม
+                if found_green and found_red:
+                    break
+
+            return white_line_x, found_green, found_red
+        except Exception as e:
+            print(f"Error in check_gauge_components: {e}")
+            return None, False, False
+
+    def get_gauge_zone(self, relative_pos):
+        """ระบุว่าตำแหน่งในเกจอยู่ในโซนใด"""
+        # อัปเดตค่าจากการตั้งค่า
+        red_zone_threshold = self.config.get(
+            "red_zone_threshold", DEFAULT_CONFIG["red_zone_threshold"]
+        )
+        buffer_zone_size = self.config.get(
+            "buffer_zone_size", DEFAULT_CONFIG["buffer_zone_size"]
+        )
+
+        # คำนวณขอบเขตของโซน
+        safe_zone_min = red_zone_threshold + buffer_zone_size
+        safe_zone_max = 1.0 - red_zone_threshold - buffer_zone_size
+
+        # ระบุโซน
+        if relative_pos < red_zone_threshold:
+            return "danger_left", "LEFT DANGER - Clicking!"
+        elif relative_pos < safe_zone_min:
+            return "caution_left", "LEFT CAUTION - Clicking!"
+        elif relative_pos > (1.0 - red_zone_threshold):
+            return "danger_right", "RIGHT DANGER - Stop Clicking!"
+        elif relative_pos > safe_zone_max:
+            return "caution_right", "RIGHT CAUTION - Stop Clicking!"
+        else:
+            return "safe", "SAFE ZONE - Clicking!"
 
     def fishing_loop(self, region, ui):
         """การทำงานหลักสำหรับตรวจจับและคลิก"""
@@ -103,154 +154,109 @@ class GaugeDetector:
 
         x1, y1, x2, y2 = region
         gauge_width = x2 - x1
-        gauge_height = y2 - y1
 
-        # โซนที่ปลอดภัยสำหรับคลิก - ใช้ค่าที่อาจเปลี่ยนแปลงได้จากการตั้งค่า
-        safe_zone_min = self.red_zone_threshold + self.buffer_zone_size
-        safe_zone_max = 1.0 - self.red_zone_threshold - self.buffer_zone_size
-
-        # ตัวแปรติดตามเวลาที่เกจหายไป
+        # ตัวแปรติดตามสถานะ
         last_line_detected_time = time.time()
-        gauge_was_detected = False  # เพื่อติดตามว่าเคยตรวจพบเกจมาก่อนหรือไม่
-        last_missing_gauge_click_time = 0  # เวลาล่าสุดที่คลิกหลังจากเกจหาย
+        gauge_was_detected = False
+        last_missing_gauge_click_time = 0
 
         while self.app.running:
             try:
-                # ตรวจสอบว่ามีการเปลี่ยนแปลงค่าจากหน้าตั้งค่าหรือไม่
-                if hasattr(self.app, "config_manager"):
-                    # อัปเดตค่าตั้งต้นจาก config ล่าสุด
-                    config = self.app.config_manager.config
-                    self.red_zone_threshold = config.get("red_zone_threshold", 0.2)
-                    self.buffer_zone_size = config.get("buffer_zone_size", 0.13)
-                    self.line_threshold = config.get("line_threshold", 200)
-                    self.color_threshold = config.get("color_threshold", 30)
-                    self.action_cooldown = config.get("action_cooldown", 0.1)
-                    self.periodic_click_interval = config.get(
-                        "periodic_click_interval", 4.0
-                    )
-
-                    # คำนวณค่าโซนใหม่
-                    safe_zone_min = self.red_zone_threshold + self.buffer_zone_size
-                    safe_zone_max = (
-                        1.0 - self.red_zone_threshold - self.buffer_zone_size
-                    )
+                # อัปเดตค่าจากการตั้งค่า
+                self.update_config()
 
                 # จับภาพหน้าจอ
                 screenshot = pyautogui.screenshot(region=(x1, y1, x2 - x1, y2 - y1))
                 screenshot_cv = cv2.cvtColor(np.array(screenshot), cv2.COLOR_RGB2BGR)
 
-                # หาเส้นขาว
-                white_line_x_local = self.find_white_line(
-                    screenshot_cv, 0, gauge_height, 0, gauge_width
+                # ตรวจสอบองค์ประกอบของเกจ
+                white_line_x, found_green, found_red = self.check_gauge_components(
+                    screenshot_cv
                 )
 
                 current_time = time.time()
 
-                # ตรวจสอบว่าพบเส้นขาวหรือไม่
-                if white_line_x_local is not None:
-                    # พบเส้นขาว ตรวจสอบเพิ่มเติมว่ามีสีเขียวและสีแดงด้วยหรือไม่
+                # พบเกจสมบูรณ์ (มีทั้งเส้นขาว, โซนสีเขียว, โซนสีแดง)
+                if white_line_x is not None and found_green and found_red:
+                    # คำนวณตำแหน่งสัมพัทธ์
+                    relative_pos = white_line_x / gauge_width
 
-                    # คำนวณตำแหน่งของเส้นขาวเทียบกับความกว้างของเกจ
-                    relative_pos = white_line_x_local / gauge_width
+                    # พบเกจที่สมบูรณ์
+                    gauge_was_detected = True
+                    last_line_detected_time = current_time
 
-                    # ตรวจสอบโซนสีต่างๆ ในเกจ
-                    found_green = False
-                    found_red = False
+                    # อัปเดตตำแหน่งและสถานะ
+                    ui.update_line_position(relative_pos)
 
-                    # ตรวจหาสีเขียวและสีแดงในภาพ
-                    check_y = gauge_height // 2
+                    # ระบุโซนและดำเนินการตามโซน
+                    zone, status_text = self.get_gauge_zone(relative_pos)
 
-                    # ตรวจสอบทุกจุดในแนวนอนเพื่อหาสีเขียวและสีแดง
-                    for test_x in range(
-                        0, gauge_width, 5
-                    ):  # ข้ามทุกๆ 5 พิกเซลเพื่อลดการประมวลผล
-                        color = self.detect_color_region(screenshot_cv, test_x, check_y)
-                        if color == "green":
-                            found_green = True
-                        elif color == "red":
-                            found_red = True
+                    # กำหนดการคลิกตามโซน
+                    should_click = zone in ["safe", "caution_left", "danger_left"]
 
-                        # ถ้าพบทั้งสีเขียวและสีแดงแล้ว ให้หยุดการค้นหา
-                        if found_green and found_red:
-                            break
+                    if should_click:
+                        # ใช้ค่า action_cooldown จากการตั้งค่า
+                        action_cooldown = self.config.get(
+                            "action_cooldown", DEFAULT_CONFIG["action_cooldown"]
+                        )
 
-                    # ถ้าพบครบทุกองค์ประกอบ (ขาว เขียว แดง)
-                    if found_green and found_red:
-                        # พบเกจที่สมบูรณ์
-                        gauge_was_detected = True
-                        last_line_detected_time = current_time
-
-                        # อัปเดตตำแหน่งเส้นในเกจ
-                        ui.update_line_position(relative_pos)
-
-                        # ตรวจสอบว่าอยู่ในโซนปลอดภัยหรือไม่
-                        in_safe_zone = safe_zone_min <= relative_pos <= safe_zone_max
-
-                        # อยู่ใกล้โซนแดงซ้ายหรือขวา
-                        near_left_red = relative_pos < safe_zone_min
-                        near_right_red = relative_pos > safe_zone_max
-
-                        # ตรรกะการคลิก
-                        if in_safe_zone:
-                            # อยู่ในโซนปลอดภัย - คลิกได้
-                            if (
-                                current_time - self.last_action_time
-                                > self.action_cooldown
-                            ):
-                                pyautogui.click()
-                                self.last_action_time = current_time
-                                ui.update_status("SAFE - Clicking!", "success")
-
-                        elif near_left_red:
-                            # ใกล้โซนแดงซ้าย - คลิกต่อ
-                            if (
-                                current_time - self.last_action_time
-                                > self.action_cooldown
-                            ):
-                                pyautogui.click()
-                                self.last_action_time = current_time
-                                ui.update_status("NEAR LEFT RED - Clicking!", "warning")
-
-                        elif near_right_red:
-                            # ใกล้โซนแดงขวา - หยุดคลิก
+                        if current_time - self.last_action_time > action_cooldown:
+                            pyautogui.click()
+                            self.last_action_time = current_time
                             ui.update_status(
-                                "NEAR RIGHT RED - Stop Clicking!", "danger"
+                                status_text, "success" if zone == "safe" else "warning"
                             )
                     else:
-                        # พบเส้นขาวแต่ไม่พบสีเขียวหรือสีแดง ถือว่าไม่พบเกจที่สมบูรณ์
-                        ui.update_status("Incomplete gauge detected", "warning")
+                        ui.update_status(status_text, "danger")
 
-                        # ใช้ค่า periodic_click_interval จากการตั้งค่า
-                        if (
-                            current_time - last_missing_gauge_click_time
-                            >= self.periodic_click_interval
-                        ):
-                            pyautogui.click()
-                            last_missing_gauge_click_time = current_time
-                            ui.update_status(
-                                f"Incomplete gauge - Clicking every {self.periodic_click_interval}s",
-                                "warning",
-                            )
-                else:
-                    # ไม่พบเส้นขาว
-                    ui.update_status("No line detected", "warning")
+                # พบเส้นขาวแต่ไม่พบสีอื่น - เกจไม่สมบูรณ์
+                elif white_line_x is not None:
+                    ui.update_status("Incomplete gauge detected", "warning")
 
-                    # กดเมื่อผ่านไประยะเวลาตามที่กำหนด ถ้าเคยพบเกจมาก่อน
-                    if gauge_was_detected and (
-                        current_time - last_line_detected_time >= self.first_click_delay
+                    # คลิกตามรอบเวลาที่กำหนด
+                    periodic_click_interval = self.config.get(
+                        "periodic_click_interval",
+                        DEFAULT_CONFIG["periodic_click_interval"],
+                    )
+
+                    if (
+                        current_time - last_missing_gauge_click_time
+                        >= periodic_click_interval
                     ):
-                        if (
-                            current_time - last_missing_gauge_click_time
-                            >= self.periodic_click_interval
-                        ):
-                            pyautogui.click()
-                            last_missing_gauge_click_time = current_time
-                            ui.update_status(
-                                f"No gauge - Clicking every {self.periodic_click_interval}s",
-                                "warning",
-                            )
+                        pyautogui.click()
+                        last_missing_gauge_click_time = current_time
+                        ui.update_status(
+                            f"Incomplete gauge - Clicking every {periodic_click_interval}s",
+                            "warning",
+                        )
 
-                # หน่วงเวลาเล็กน้อยเพื่อลดการใช้ CPU
+                # ไม่พบเส้นขาว - เกจหายไป
+                else:
+                    ui.update_status("No gauge detected", "warning")
+
+                    # คลิกหากเกจหายไป และเคยพบเกจมาก่อน
+                    if gauge_was_detected:
+                        first_click_delay = self.config.get(
+                            "first_click_delay", DEFAULT_CONFIG["first_click_delay"]
+                        )
+                        periodic_click_interval = self.config.get(
+                            "periodic_click_interval",
+                            DEFAULT_CONFIG["periodic_click_interval"],
+                        )
+
+                        if current_time - last_line_detected_time >= first_click_delay:
+                            if (
+                                current_time - last_missing_gauge_click_time
+                                >= periodic_click_interval
+                            ):
+                                pyautogui.click()
+                                last_missing_gauge_click_time = current_time
+                                ui.update_status(
+                                    f"No gauge - Clicking every {periodic_click_interval}s",
+                                    "warning",
+                                )
+
+                # หน่วงเวลาเล็กน้อย
                 time.sleep(0.01)
 
             except Exception as e:

@@ -258,73 +258,57 @@ class PixelGauge:
         green_zone_width,
         width,
     ):
-        """วาดโซนสีต่างๆ ด้วยลายพิกเซล"""
-        # โซนแดง (ซ้าย)
+        """วาดโซนสีต่างๆ ด้วยลายพิกเซลที่มีประสิทธิภาพมากขึ้น"""
+        h, w = rows, cols
+
+        # สร้าง grid ขนาด h x w แทนการวนลูปซ้อน
         for row in range(rows):
-            for col in range(int(red_zone_width // cell_size)):
+            # โซนแดงซ้าย
+            red_cols = int(red_zone_width // cell_size)
+            for col in range(red_cols):
                 x1 = gauge_padding + (col * cell_size)
                 y1 = gauge_padding + (row * cell_size)
                 x2 = x1 + cell_size - 1
                 y2 = y1 + cell_size - 1
 
-                # สร้างลายพิกเซลด้วยการสุ่มค่าความเข้มของสี
-                intensity = 0.9 + (hash((row, col)) % 20) / 100
-                r = min(255, int(int(self.danger_color[1:3], 16) * intensity))
-                g = min(255, int(int(self.danger_color[3:5], 16) * intensity))
-                b = min(255, int(int(self.danger_color[5:7], 16) * intensity))
+                # ใช้ seed ที่แน่นอนในการสุ่มเพื่อให้ได้ลายเดิมทุกครั้ง
+                seed = hash((row, col)) % 20
+                intensity = 0.9 + seed / 100
+                color = self._adjust_color_intensity(self.danger_color, intensity)
 
-                color = f"#{r:02x}{g:02x}{b:02x}"
                 self.canvas.create_rectangle(x1, y1, x2, y2, fill=color, outline="")
 
-        # โซนบัฟเฟอร์ (ซ้าย)
-        for row in range(rows):
-            for col in range(int(buffer_width // cell_size)):
+            # โซนบัฟเฟอร์ซ้าย
+            buffer_cols = int(buffer_width // cell_size)
+            for col in range(buffer_cols):
                 x1 = gauge_padding + red_zone_width + (col * cell_size)
                 y1 = gauge_padding + (row * cell_size)
                 x2 = x1 + cell_size - 1
                 y2 = y1 + cell_size - 1
 
-                # ไล่ระดับสีจากแดงเป็นเขียว
-                ratio = col / (buffer_width // cell_size)
-                ratio_variant = ratio + (hash((row, col)) % 10) / 100 - 0.05
-                ratio_variant = max(0, min(1, ratio_variant))
+                # ไล่ระดับสีจากแดงไปเขียว
+                ratio = col / max(1, buffer_cols - 1)
+                color = self._blend_colors(self.danger_color, self.success_color, ratio)
 
-                r = int(
-                    (1 - ratio_variant) * int(self.danger_color[1:3], 16)
-                    + ratio_variant * int(self.success_color[1:3], 16)
-                )
-                g = int(
-                    (1 - ratio_variant) * int(self.danger_color[3:5], 16)
-                    + ratio_variant * int(self.success_color[3:5], 16)
-                )
-                b = int(
-                    (1 - ratio_variant) * int(self.danger_color[5:7], 16)
-                    + ratio_variant * int(self.success_color[5:7], 16)
-                )
-
-                color = f"#{r:02x}{g:02x}{b:02x}"
                 self.canvas.create_rectangle(x1, y1, x2, y2, fill=color, outline="")
 
-        # โซนเขียว (กลาง)
-        for row in range(rows):
-            for col in range(int(green_zone_width // cell_size)):
+            # โซนเขียวกลาง
+            green_cols = int(green_zone_width // cell_size)
+            for col in range(green_cols):
                 x1 = gauge_padding + red_zone_width + buffer_width + (col * cell_size)
                 y1 = gauge_padding + (row * cell_size)
                 x2 = x1 + cell_size - 1
                 y2 = y1 + cell_size - 1
 
-                # สร้างลายพิกเซลด้วยการสุ่มค่าความเข้มของสี
-                intensity = 0.9 + (hash((row, col)) % 20) / 100
-                r = min(255, int(int(self.success_color[1:3], 16) * intensity))
-                g = min(255, int(int(self.success_color[3:5], 16) * intensity))
-                b = min(255, int(int(self.success_color[5:7], 16) * intensity))
+                # ใช้ seed ที่แน่นอนในการสุ่มเพื่อให้ได้ลายเดิมทุกครั้ง
+                seed = hash((row, col)) % 20
+                intensity = 0.9 + seed / 100
+                color = self._adjust_color_intensity(self.success_color, intensity)
 
-                color = f"#{r:02x}{g:02x}{b:02x}"
                 self.canvas.create_rectangle(x1, y1, x2, y2, fill=color, outline="")
 
-        # โซนบัฟเฟอร์ (ขวา)
-        for row in range(rows):
-            for col in range(int(buffer_width // cell_size)):
+            # โซนบัฟเฟอร์ขวา
+            for col in range(buffer_cols):
                 x1 = (
                     gauge_padding
                     + red_zone_width
@@ -336,43 +320,51 @@ class PixelGauge:
                 x2 = x1 + cell_size - 1
                 y2 = y1 + cell_size - 1
 
-                # ไล่ระดับสีจากเขียวเป็นแดง
-                ratio = col / (buffer_width // cell_size)
-                ratio_variant = ratio + (hash((row, col)) % 10) / 100 - 0.05
-                ratio_variant = max(0, min(1, ratio_variant))
+                # ไล่ระดับสีจากเขียวไปแดง
+                ratio = col / max(1, buffer_cols - 1)
+                color = self._blend_colors(self.success_color, self.danger_color, ratio)
 
-                r = int(
-                    (1 - ratio_variant) * int(self.success_color[1:3], 16)
-                    + ratio_variant * int(self.danger_color[1:3], 16)
-                )
-                g = int(
-                    (1 - ratio_variant) * int(self.success_color[3:5], 16)
-                    + ratio_variant * int(self.danger_color[3:5], 16)
-                )
-                b = int(
-                    (1 - ratio_variant) * int(self.success_color[5:7], 16)
-                    + ratio_variant * int(self.danger_color[5:7], 16)
-                )
-
-                color = f"#{r:02x}{g:02x}{b:02x}"
                 self.canvas.create_rectangle(x1, y1, x2, y2, fill=color, outline="")
 
-        # โซนแดง (ขวา)
-        for row in range(rows):
-            for col in range(int(red_zone_width // cell_size)):
+            # โซนแดงขวา
+            for col in range(red_cols):
                 x1 = width - gauge_padding - red_zone_width + (col * cell_size)
                 y1 = gauge_padding + (row * cell_size)
                 x2 = x1 + cell_size - 1
                 y2 = y1 + cell_size - 1
 
-                # สร้างลายพิกเซลด้วยการสุ่มค่าความเข้มของสี
-                intensity = 0.9 + (hash((row, col)) % 20) / 100
-                r = min(255, int(int(self.danger_color[1:3], 16) * intensity))
-                g = min(255, int(int(self.danger_color[3:5], 16) * intensity))
-                b = min(255, int(int(self.danger_color[5:7], 16) * intensity))
+                # ใช้ seed ที่แน่นอนในการสุ่มเพื่อให้ได้ลายเดิมทุกครั้ง
+                seed = hash((row, col)) % 20
+                intensity = 0.9 + seed / 100
+                color = self._adjust_color_intensity(self.danger_color, intensity)
 
-                color = f"#{r:02x}{g:02x}{b:02x}"
                 self.canvas.create_rectangle(x1, y1, x2, y2, fill=color, outline="")
+
+    # เพิ่มเมธอดช่วยสำหรับการผสมสีและปรับความเข้มของสี
+    def _blend_colors(self, color1, color2, ratio):
+        """ผสมสีระหว่างสองสีตามอัตราส่วนที่กำหนด"""
+        r1, g1, b1 = int(color1[1:3], 16), int(color1[3:5], 16), int(color1[5:7], 16)
+        r2, g2, b2 = int(color2[1:3], 16), int(color2[3:5], 16), int(color2[5:7], 16)
+
+        # คำนวณสีใหม่
+        r = int(r1 * (1 - ratio) + r2 * ratio)
+        g = int(g1 * (1 - ratio) + g2 * ratio)
+        b = int(b1 * (1 - ratio) + b2 * ratio)
+
+        # แปลงกลับเป็นรหัสสี HEX
+        return f"#{r:02x}{g:02x}{b:02x}"
+
+    def _adjust_color_intensity(self, color, intensity):
+        """ปรับความเข้มของสี"""
+        r, g, b = int(color[1:3], 16), int(color[3:5], 16), int(color[5:7], 16)
+
+        # ปรับค่าแต่ละช่องสี
+        r = min(255, int(r * intensity))
+        g = min(255, int(g * intensity))
+        b = min(255, int(b * intensity))
+
+        # แปลงกลับเป็นรหัสสี HEX
+        return f"#{r:02x}{g:02x}{b:02x}"
 
     def _draw_zone_dividers(
         self, gauge_padding, gauge_inner_height, red_zone_width, buffer_width, width

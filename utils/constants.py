@@ -6,6 +6,24 @@ UI_CONSTANTS = {
     "FONT_FAMILY": "Courier",
 }
 
+# ค่า default สำหรับการตั้งค่าทั้งหมดของแอพ
+DEFAULT_CONFIG = {
+    "red_zone_threshold": 0.2,
+    "buffer_zone_size": 0.13,
+    "line_threshold": 200,
+    "color_threshold": 30,
+    "action_cooldown": 0.1,
+    "first_click_delay": 1.0,
+    "periodic_click_interval": 4.0,
+    "ui_colors": {
+        "primary": "#3498db",
+        "success": "#2ecc71",
+        "danger": "#e74c3c",
+        "warning": "#f39c12",
+        "background": "#f5f5f5",
+    }
+}
+
 # ค่าคงที่สำหรับการตรวจจับ
 DETECTION_CONSTANTS = {
     "DEFAULT_LINE_THRESHOLD": 200,

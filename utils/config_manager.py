@@ -1,6 +1,8 @@
 import json
 import os
 import time
+from utils.constants import DEFAULT_CONFIG
+
 
 
 class ConfigManager:
@@ -24,27 +26,40 @@ class ConfigManager:
         """โหลดการตั้งค่าจากไฟล์ config.json"""
         try:
             with open(self.config_file, "r") as f:
-                return json.load(f)
+                config = json.load(f)
+                # ตรวจสอบและเพิ่มค่าที่ขาดหายไป
+                self._verify_and_update_config(config)
+                return config
         except (FileNotFoundError, json.JSONDecodeError):
             # ถ้าไฟล์ไม่มีหรือมีปัญหา ใช้ค่าเริ่มต้น
-            default_config = {
-                "red_zone_threshold": 0.2,
-                "buffer_zone_size": 0.13,
-                "line_threshold": 200,
-                "color_threshold": 30,
-                "action_cooldown": 0.1,
-                "first_click_delay": 1.0,
-                "periodic_click_interval": 4.0,
-                "ui_colors": {
-                    "primary": "#3498db",
-                    "success": "#2ecc71",
-                    "danger": "#e74c3c",
-                    "warning": "#f39c12",
-                    "background": "#f5f5f5",
-                },
-            }
-            self.save_config(default_config)
-            return default_config
+            self.save_config(DEFAULT_CONFIG)
+            return DEFAULT_CONFIG.copy()
+
+    def _verify_and_update_config(self, config):
+        """ตรวจสอบว่ามีค่าที่จำเป็นทั้งหมดหรือไม่ ถ้าไม่มีให้เพิ่มจากค่า default"""
+        updated = False
+
+        # ตรวจสอบค่าหลัก
+        for key, value in DEFAULT_CONFIG.items():
+            if key not in config:
+                config[key] = value
+                updated = True
+            elif key == "ui_colors" and isinstance(value, dict):
+                # ตรวจสอบค่าสีย่อย
+                if not isinstance(config[key], dict):
+                    config[key] = value
+                    updated = True
+                else:
+                    for color_key, color_value in value.items():
+                        if color_key not in config[key]:
+                            config[key][color_key] = color_value
+                            updated = True
+
+        # บันทึกการเปลี่ยนแปลงถ้ามีการอัปเดต
+        if updated:
+            self.save_config(config)
+
+        return config
 
     def save_config(self, config=None):
         """บันทึกการตั้งค่าลงไฟล์ config.json
@@ -129,7 +144,7 @@ class ConfigManager:
         Returns:
             dict: dictionary ของสีทั้งหมด
         """
-        return self.config.get("ui_colors", {})
+        return self.config.get("ui_colors", DEFAULT_CONFIG["ui_colors"])
 
     def register_observer(self, callback):
         """ลงทะเบียนฟังก์ชันที่จะเรียกเมื่อมีการเปลี่ยนแปลงการตั้งค่า
