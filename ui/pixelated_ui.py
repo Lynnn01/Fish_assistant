@@ -12,8 +12,6 @@ from utils.constants import PIXEL_COLORS, UI_CONSTANTS, TIPS
 
 
 class PixelatedUI:
-    # แก้ไขวิธีการใช้สีใน pixelated_ui.py
-    # แก้ไข __init__ ใน pixelated_ui.py เพิ่มเติม
     def __init__(self, root, app):
         """
         สร้างอินเตอร์เฟซแบบพิกเซลอาร์ตสำหรับโปรแกรม Fishing Bot
@@ -221,8 +219,6 @@ class PixelatedUI:
         )
         self.stop_button.grid(row=0, column=2, padx=5, pady=5, sticky="ew")
 
-    # แก้ไข method _create_gauge_section ใน pixelated_ui.py
-
     def _create_gauge_section(self, parent):
         """สร้างส่วนแสดงเกจ"""
         gauge_frame = ttk.LabelFrame(
@@ -303,8 +299,6 @@ class PixelatedUI:
             font=(UI_CONSTANTS["FONT_FAMILY"], 8),
         )
         version_label.pack(side="right")
-
-    # แก้ไข method update_line_position ใน pixelated_ui.py
 
     def update_line_position(self, relative_pos):
         """อัปเดตตำแหน่งเส้นตัวชี้ในเกจ"""

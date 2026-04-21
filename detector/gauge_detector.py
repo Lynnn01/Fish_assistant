@@ -155,51 +155,43 @@ class GaugeDetector:
         x1, y1, x2, y2 = region
         gauge_width = x2 - x1
 
-        # ตัวแปรติดตามสถานะ
         last_line_detected_time = time.time()
         gauge_was_detected = False
         last_missing_gauge_click_time = 0
 
         while self.app.running:
             try:
-                # อัปเดตค่าจากการตั้งค่า
                 self.update_config()
 
-                # จับภาพหน้าจอ
+                # อ่านค่า config ครั้งเดียวต่อรอบ
+                action_cooldown = self.config.get(
+                    "action_cooldown", DEFAULT_CONFIG["action_cooldown"]
+                )
+                first_click_delay = self.config.get(
+                    "first_click_delay", DEFAULT_CONFIG["first_click_delay"]
+                )
+                periodic_click_interval = self.config.get(
+                    "periodic_click_interval", DEFAULT_CONFIG["periodic_click_interval"]
+                )
+
                 screenshot = pyautogui.screenshot(region=(x1, y1, x2 - x1, y2 - y1))
                 screenshot_cv = cv2.cvtColor(np.array(screenshot), cv2.COLOR_RGB2BGR)
 
-                # ตรวจสอบองค์ประกอบของเกจ
                 white_line_x, found_green, found_red = self.check_gauge_components(
                     screenshot_cv
                 )
-
                 current_time = time.time()
 
-                # พบเกจสมบูรณ์ (มีทั้งเส้นขาว, โซนสีเขียว, โซนสีแดง)
                 if white_line_x is not None and found_green and found_red:
-                    # คำนวณตำแหน่งสัมพัทธ์
                     relative_pos = white_line_x / gauge_width
-
-                    # พบเกจที่สมบูรณ์
                     gauge_was_detected = True
                     last_line_detected_time = current_time
 
-                    # อัปเดตตำแหน่งและสถานะ
                     ui.update_line_position(relative_pos)
-
-                    # ระบุโซนและดำเนินการตามโซน
                     zone, status_text = self.get_gauge_zone(relative_pos)
-
-                    # กำหนดการคลิกตามโซน
                     should_click = zone in ["safe", "caution_left", "danger_left"]
 
                     if should_click:
-                        # ใช้ค่า action_cooldown จากการตั้งค่า
-                        action_cooldown = self.config.get(
-                            "action_cooldown", DEFAULT_CONFIG["action_cooldown"]
-                        )
-
                         if current_time - self.last_action_time > action_cooldown:
                             pyautogui.click()
                             self.last_action_time = current_time
@@ -209,16 +201,8 @@ class GaugeDetector:
                     else:
                         ui.update_status(status_text, "danger")
 
-                # พบเส้นขาวแต่ไม่พบสีอื่น - เกจไม่สมบูรณ์
                 elif white_line_x is not None:
                     ui.update_status("Incomplete gauge detected", "warning")
-
-                    # คลิกตามรอบเวลาที่กำหนด
-                    periodic_click_interval = self.config.get(
-                        "periodic_click_interval",
-                        DEFAULT_CONFIG["periodic_click_interval"],
-                    )
-
                     if (
                         current_time - last_missing_gauge_click_time
                         >= periodic_click_interval
@@ -230,20 +214,9 @@ class GaugeDetector:
                             "warning",
                         )
 
-                # ไม่พบเส้นขาว - เกจหายไป
                 else:
                     ui.update_status("No gauge detected", "warning")
-
-                    # คลิกหากเกจหายไป และเคยพบเกจมาก่อน
                     if gauge_was_detected:
-                        first_click_delay = self.config.get(
-                            "first_click_delay", DEFAULT_CONFIG["first_click_delay"]
-                        )
-                        periodic_click_interval = self.config.get(
-                            "periodic_click_interval",
-                            DEFAULT_CONFIG["periodic_click_interval"],
-                        )
-
                         if current_time - last_line_detected_time >= first_click_delay:
                             if (
                                 current_time - last_missing_gauge_click_time
@@ -256,7 +229,6 @@ class GaugeDetector:
                                     "warning",
                                 )
 
-                # หน่วงเวลาเล็กน้อย
                 time.sleep(0.01)
 
             except Exception as e:

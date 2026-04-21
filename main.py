@@ -1,17 +1,15 @@
 import tkinter as tk
 import keyboard
+import threading
 import os
 import sys
 
-# เพิ่มโฟลเดอร์ปัจจุบันในพาธ
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from ui.pixelated_ui import PixelatedUI
 from detector.gauge_detector import GaugeDetector
-from utils.config_manager import (
-    ConfigManager,
-)  # เปลี่ยนจาก config.py เป็น utils.config_manager
-from app_integration import integrate_settings  # เพิ่มการนำเข้าสำหรับการผสานหน้าตั้งค่า
+from utils.config_manager import ConfigManager
+from app_integration import integrate_settings
 
 
 class FishingBot:
@@ -21,10 +19,6 @@ class FishingBot:
         self.root.geometry("430x780")
         self.root.resizable(False, False)
 
-        # โหลดการตั้งค่า (จะถูกแทนที่ด้วย ConfigManager)
-        # self.config = BotConfig()
-
-        # สถานะโปรแกรม
         self.running = False
         self.region = None
         self.detection_thread = None
@@ -104,9 +98,6 @@ class FishingBot:
         if not self.running and self.region:
             self.running = True
             self.ui.update_status("Starting...", "warning")
-
-            # เริ่มการจับปลา
-            import threading
 
             self.detection_thread = threading.Thread(target=self.fishing_loop)
             self.detection_thread.daemon = True

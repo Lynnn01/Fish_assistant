@@ -44,9 +44,6 @@ def on_config_changed(app, config):
         app: แอพพลิเคชันหลัก
         config: การตั้งค่าใหม่
     """
-    print("การตั้งค่าเปลี่ยนแปลง:", config)
-
-    # อัปเดตค่าเกณฑ์ต่างๆ
     if hasattr(app, "detector"):
         app.detector.line_threshold = config.get("line_threshold", 200)
         app.detector.color_threshold = config.get("color_threshold", 30)

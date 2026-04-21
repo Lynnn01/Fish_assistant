@@ -5,7 +5,6 @@ import time
 
 
 class PixelGauge:
-    # แก้ไข gauge_widget.py
     def __init__(self, parent, colors):
         """
         สร้างเกจแบบพิกเซลอาร์ตสำหรับการตกปลา
@@ -17,9 +16,6 @@ class PixelGauge:
         self.parent = parent
         self.colors = colors
 
-        # ใช้สีจาก colors dictionary หรือใช้ค่าเริ่มต้นถ้าไม่มี
-        # แทนที่จะระบุสีเริ่มต้นในแต่ละบรรทัด ควรใช้สีจาก constants จะดีกว่า
-        # หากแก้ไขให้สมบูรณ์ควรอิมพอร์ต PIXEL_COLORS มาใช้
         self.success_color = colors.get("success")
         self.danger_color = colors.get("danger")
         self.warning_color = colors.get("warning")
