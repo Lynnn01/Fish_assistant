@@ -85,11 +85,13 @@ class FishingBot:
         """เรียกใช้ฟังก์ชันเลือกพื้นที่เกจ"""
         from detector.screen_selector import select_region
 
-        region = select_region(self.root)
+        select_region(self.root, self._on_region_selected)
+
+    def _on_region_selected(self, region):
+        """callback หลังจากเลือก region เสร็จ"""
         if region:
             self.region = region
             self.ui.update_region_info(region)
-            print(f"Region selected: {region}")
             self.ui.set_start_button_state("normal")
             self.ui.update_status("Region selected", "success")
 

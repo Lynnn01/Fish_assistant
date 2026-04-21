@@ -1,92 +1,93 @@
-import numpy as np
+import tkinter as tk
+from PIL import Image, ImageTk
 import pyautogui
-import cv2
-import time
 
 
-def select_region(root_window):
-    """เลือกพื้นที่ตรวจจับเกจ"""
-    root_window.iconify()  # Minimize main window
-    time.sleep(0.5)  # Wait for window to minimize
-
-    # Take a screenshot
+def select_region(root, callback):
+    """
+    เปิดหน้าต่างเลือกพื้นที่แบบ fullscreen ด้วย tkinter
+    เมื่อเลือกเสร็จจะเรียก callback(region) โดย region = (x1,y1,x2,y2) หรือ None
+    """
     screenshot = pyautogui.screenshot()
-    screenshot_np = np.array(screenshot)
-    screenshot_cv = cv2.cvtColor(screenshot_np, cv2.COLOR_RGB2BGR)
 
-    # Create a selection window
-    cv2.namedWindow("Select Gauge Region", cv2.WINDOW_NORMAL)
+    overlay = tk.Toplevel(root)
+    overlay.attributes("-fullscreen", True)
+    overlay.attributes("-topmost", True)
+    overlay.configure(cursor="crosshair")
+    overlay.lift()
+    overlay.focus_force()
 
-    # Variables to store selection
-    region_points = []
+    screen_w = overlay.winfo_screenwidth()
+    screen_h = overlay.winfo_screenheight()
 
-    def mouse_callback(event, x, y, flags, param):
-        nonlocal region_points, screenshot_cv
+    # แปลงภาพหน้าจอเป็น PhotoImage
+    screenshot = screenshot.resize((screen_w, screen_h), Image.NEAREST)
+    bg_image = ImageTk.PhotoImage(screenshot)
 
-        if event == cv2.EVENT_LBUTTONDOWN:
-            if len(region_points) < 2:
-                region_points.append((x, y))
-
-                # ถ้าเลือกจุดแรก
-                if len(region_points) == 1:
-                    # วาดเส้นแนวนอนและแนวตั้งผ่านตำแหน่งเมาส์
-                    temp_img = screenshot_cv.copy()
-                    cv2.line(temp_img, (0, y), (temp_img.shape[1], y), (0, 255, 0), 1)
-                    cv2.line(temp_img, (x, 0), (x, temp_img.shape[0]), (0, 255, 0), 1)
-                    cv2.circle(temp_img, (x, y), 5, (0, 0, 255), -1)
-                    cv2.imshow("Select Gauge Region", temp_img)
-
-                if len(region_points) == 2:
-                    cv2.destroyAllWindows()
-
-    cv2.setMouseCallback("Select Gauge Region", mouse_callback)
-
-    # Display instructions
-    instruction_img = screenshot_cv.copy()
-    cv2.putText(
-        instruction_img,
-        "Click on the top-left and bottom-right corners of the gauge area",
-        (50, 50),
-        cv2.FONT_HERSHEY_SIMPLEX,
-        1,
-        (0, 0, 255),
-        2,
+    canvas = tk.Canvas(
+        overlay,
+        width=screen_w,
+        height=screen_h,
+        highlightthickness=0,
+        cursor="crosshair",
     )
-    cv2.imshow("Select Gauge Region", instruction_img)
+    canvas.pack(fill="both", expand=True)
+    canvas.create_image(0, 0, anchor="nw", image=bg_image)
+    canvas._bg_image = bg_image  # ป้องกัน GC เก็บ reference
 
-    while len(region_points) < 2:
-        display_img = screenshot_cv.copy()
+    # overlay สีเข้มกึ่งโปร่งแสง
+    canvas.create_rectangle(
+        0, 0, screen_w, screen_h, fill="black", stipple="gray50", outline=""
+    )
 
-        # Draw points selected
-        for point in region_points:
-            cv2.circle(display_img, point, 5, (0, 0, 255), -1)
+    # ข้อความคำแนะนำ
+    instruction = canvas.create_text(
+        screen_w // 2,
+        40,
+        text="คลิกมุมซ้ายบน ของพื้นที่เกจ  |  ESC = ยกเลิก",
+        fill="#00ff00",
+        font=("Courier", 18, "bold"),
+    )
 
-        # ถ้ามีจุดแรกแล้วให้แสดงกรอบพื้นที่ที่กำลังจะเลือก
-        if len(region_points) == 1:
-            # ดึงพิกัดเมาส์ปัจจุบัน
-            mouse_x, mouse_y = pyautogui.position()
-            # วาดกรอบสี่เหลี่ยมจากจุดแรกถึงเมาส์ปัจจุบัน
-            cv2.rectangle(
-                display_img, region_points[0], (mouse_x, mouse_y), (0, 255, 0), 2
-            )
+    state = {"start": None, "rect": None}
 
-        cv2.imshow("Select Gauge Region", display_img)
+    def on_press(event):
+        state["start"] = (event.x, event.y)
+        if state["rect"]:
+            canvas.delete(state["rect"])
+        canvas.itemconfig(instruction, text="คลิกมุมขวาล่าง ของพื้นที่เกจ  |  ESC = ยกเลิก")
 
-        if cv2.waitKey(1) == 27:  # ESC key
-            region_points = []
-            cv2.destroyAllWindows()
-            break
+    def on_drag(event):
+        if state["start"] is None:
+            return
+        if state["rect"]:
+            canvas.delete(state["rect"])
+        x0, y0 = state["start"]
+        state["rect"] = canvas.create_rectangle(
+            x0, y0, event.x, event.y, outline="#00ff00", width=2, dash=(6, 3)
+        )
 
-    # Restore main window
-    root_window.deiconify()
+    def on_release(event):
+        if state["start"] is None:
+            return
+        x1, y1 = state["start"]
+        x2, y2 = event.x, event.y
+        overlay.destroy()
+        region = (
+            min(x1, x2),
+            min(y1, y2),
+            max(x1, x2),
+            max(y1, y2),
+        )
+        callback(
+            region if region[2] - region[0] > 5 and region[3] - region[1] > 5 else None
+        )
 
-    # Process the selected region
-    if len(region_points) == 2:
-        x1 = min(region_points[0][0], region_points[1][0])
-        y1 = min(region_points[0][1], region_points[1][1])
-        x2 = max(region_points[0][0], region_points[1][0])
-        y2 = max(region_points[0][1], region_points[1][1])
+    def on_cancel(event=None):
+        overlay.destroy()
+        callback(None)
 
-        return (x1, y1, x2, y2)
-
-    return None
+    canvas.bind("<ButtonPress-1>", on_press)
+    canvas.bind("<B1-Motion>", on_drag)
+    canvas.bind("<ButtonRelease-1>", on_release)
+    overlay.bind("<Escape>", on_cancel)
